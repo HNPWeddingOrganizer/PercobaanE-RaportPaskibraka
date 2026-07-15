@@ -1,0 +1,16 @@
+{
+  "name": "Raport Digital Paskibraka",
+  "short_name": "Raport Digital Paskibraka",
+  "description": "Sistem Informasi & Evaluasi Paskibraka Kota Yogyakarta",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#D4AF37",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

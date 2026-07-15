@@ -1,0 +1,2565 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Paskibraka - Raport Digital</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050505">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- ========================================== -->
+    <!-- SHARED CSS & LIBRARIES -->
+    <!-- ========================================== -->
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"
+        crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <script>
+        // 1. Blokir Klik Kanan (Context Menu)
+        document.addEventListener("contextmenu", e => e.preventDefault());
+
+        // 2. Blokir Shortcut Keyboard (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S)
+        document.onkeydown = function (e) {
+            if (
+                e.keyCode === 123 || // F12
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Inspect Element
+                (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // View Source & Save
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        };
+
+        // 3. Debugger Trap (Membuat DevTools freeze jika dipaksa buka dengan cara lain)
+        setInterval(() => {
+            try { (function () { return false; }['constructor']('debugger')()); } catch (e) { }
+        }, 100);
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --gold-primary: #D4AF37;
+            --gold-light: #FFD700;
+            --gold-glow: rgba(255, 215, 0, 0.4);
+            --blue-royal: #1e3a8a;
+            --blue-neon: #3b82f6;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #050505;
+            color: #f8fafc;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .ambient-light {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -2;
+            opacity: 0.5;
+            animation: pulse-light 8s infinite alternate ease-in-out;
+        }
+
+        .light-gold {
+            top: -10%;
+            left: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, var(--gold-primary), transparent 70%);
+        }
+
+        .light-blue {
+            bottom: -10%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, var(--blue-royal), transparent 70%);
+            animation-delay: -4s;
+        }
+
+        @keyframes pulse-light {
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.6;
+            }
+        }
+
+        .os-window {
+            background: rgba(20, 25, 40, 0.6);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .os-input,
+        .os-select {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: 0.3s;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .os-input:focus,
+        .os-select:focus {
+            border-color: var(--gold-light);
+            box-shadow: 0 0 15px var(--gold-glow), inset 0 2px 5px rgba(0, 0, 0, 0.5);
+            outline: none;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .os-input:disabled,
+        .os-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #b45309 0%, #D4AF37 50%, #FFD700 100%);
+            color: #000;
+            font-weight: 800;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-gold:active {
+            transform: scale(0.98);
+        }
+
+        .btn-gold:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        .text-gold-gradient {
+            background: linear-gradient(to right, #F3E5AB, #FFD700, #D4AF37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: var(--gold-primary);
+        }
+
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 80vh;
+            border: 2px solid var(--gold-primary);
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+            border-radius: 10px;
+        }
+
+        .lightbox-badge {
+            position: absolute;
+            bottom: -15px;
+            right: -10px;
+            padding: 5px 15px;
+            border-radius: 999px;
+            font-size: 14px;
+            z-index: 10001;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            background: #D4AF37;
+            color: black;
+            font-weight: bold;
+            border: 1px solid white;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 10002;
+            background: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .badge-base {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .badge-kota {
+            background: linear-gradient(135deg, #00C851, #007E33);
+            color: white;
+        }
+
+        .badge-provinsi {
+            background: linear-gradient(135deg, #33b5e5, #0099CC);
+            color: white;
+        }
+
+        .badge-nasional {
+            background: linear-gradient(135deg, #ff4444, #CC0000);
+            color: white;
+        }
+
+        .badge-gold {
+            background: linear-gradient(135deg, #FFD700, #B8860B);
+            color: black;
+            border-color: #FFFACD;
+        }
+
+        /* CSS Khusus Dukungan Fullscreen iOS / Apple */
+        .ios-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999999 !important;
+            max-height: none !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #000 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useEffect } = React;
+        // HELPER UTAMA: Mengabaikan Spasi di Awal/Akhir & Huruf Besar/Kecil
+        const cleanStr = (val) => String(val || "").trim().toLowerCase();
+        // HELPER: Menghitung keterlambatan pengumpulan tugas
+        const getLateStatus = (submitTime, deadlineTime) => {
+            if (!submitTime || !deadlineTime) return null;
+            const submitDate = new Date(submitTime);
+            const deadlineDate = new Date(deadlineTime);
+
+            if (submitDate <= deadlineDate) {
+                return { isLate: false, text: "TEPAT WAKTU", color: "text-green-400", bg: "bg-green-500/20 border-green-500/30" };
+            }
+
+            const diffMs = submitDate - deadlineDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const days = Math.floor(diffMins / 1440);
+            const hours = Math.floor((diffMins % 1440) / 60);
+            const mins = diffMins % 60;
+
+            let lateText = "TERLAMBAT ";
+            if (days > 0) lateText += `${days} HARI `;
+            if (hours > 0) lateText += `${hours} JAM `;
+            if (mins > 0 || (days === 0 && hours === 0)) lateText += `${mins} MENIT`;
+
+            return { isLate: true, text: lateText.trim(), color: "text-red-400", bg: "bg-red-500/20 border-red-500/30" };
+        };
+        const LOGO_DPPI = "https://upload.wikimedia.org/wikipedia/commons/3/36/Logo_DPPI.png";
+        const LOGO_YOGYA = "https://upload.wikimedia.org/wikipedia/commons/d/db/Logo_Pemkot_Yk.png";
+        const LOGO_PASKIB = "https://upload.wikimedia.org/wikipedia/commons/d/dc/Logo_paskibraka.png";
+
+        // --- KONFIGURASI API GITHUB PAGES ---
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWShwCuygjDQ6BJeNgVCNDV0mrc9j3P9jVQSOl92iXu51GfND4y0pX4DU18eBy_IRX/exec";
+
+        // --- API BRIDGE ---
+        // --- API BRIDGE ---
+        const api = {
+            run: async (funcName, ...args) => {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        let payload = {};
+                        let isGet = false; // VARIABEL INI SEBELUMNYA HILANG
+
+                        // POST Actions (Menyimpan Data)
+                        if (funcName === 'loginUser') payload = { username: args[0], password: args[1], type: args[2] };
+                        else if (funcName === 'updateProfile') payload = { role: args[0], id: args[1], newData: args[2] };
+                        else if (funcName === 'submitReply') payload = { evalId: args[0], nik: args[1], text: args[2] };
+                        else if (funcName === 'addTrainingFeedback') payload = args[0];
+                        else if (funcName === 'submitTugas') payload = args[0];
+                        else if (funcName === 'getUploadUrl') payload = args[0];
+                        else if (funcName === 'addKomentarTugas') payload = args[0];
+                        else if (funcName === 'deletePengumpulan') payload = { id_pengumpulan: args[0] };
+                        else if (funcName === 'downloadSecureFile') payload = { fileId: args[0] };
+
+                        // GET Actions (Mengambil Data)
+                        else if (funcName === 'getEvaluasiByDate') { payload = { nik: args[0] }; isGet = true; }
+                        else if (funcName === 'getStarHistory') { payload = { nik: args[0] }; isGet = true; }
+                        else if (funcName === 'getReplies') { payload = { evalId: args[0] }; isGet = true; }
+                        else if (funcName === 'getTugas') { payload = { target: args[0] }; isGet = true; }
+                        else if (funcName === 'getPengumpulan') { payload = { id_tugas: args[0] }; isGet = true; }
+                        else if (funcName === 'addMateri') payload = args[0];
+                        else if (funcName === 'deleteMateri') payload = { id: args[0] };
+                        else if (funcName === 'getMateri') { isGet = true; }
+
+                        let response;
+                        if (isGet) {
+                            // Jika perintah GET, gunakan URL dengan parameter
+                            const qs = new URLSearchParams({ action: funcName, ...payload }).toString();
+                            response = await fetch(`${GAS_WEB_APP_URL}?${qs}`);
+                        } else {
+                            // Jika perintah POST, masukkan ke body
+                            response = await fetch(GAS_WEB_APP_URL, {
+                                method: "POST", redirect: "follow",
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: funcName, payload: payload })
+                            });
+                        }
+
+                        const result = await response.json();
+
+                        if (result.status === 'success' || result.status === 'error') {
+                            if (result.status === 'error') reject(result.message);
+                            else resolve(result.data !== undefined ? result.data : result);
+                        } else resolve(result);
+
+                    } catch (error) {
+                        reject("Gagal terhubung ke server database.");
+                    }
+                });
+            }
+        };
+
+        // --- SHARED COMPONENTS ---
+        const getBadgeClass = (penugasan) => {
+            if (!penugasan) return 'badge-kota';
+            const p = penugasan.toLowerCase();
+            if (p.includes('provinsi')) return 'badge-provinsi';
+            if (p.includes('nasional')) return 'badge-nasional';
+            return 'badge-kota';
+        };
+
+        function Background3D() {
+            return (
+                <>
+                    <div className="ambient-light light-gold"></div>
+                    <div className="ambient-light light-blue"></div>
+                </>
+            );
+        }
+
+        function StarRating({ count, size = "text-xs" }) {
+            const numCount = parseInt(count) || 0;
+            if (numCount < 0) return (<div className={`flex items-center gap-1 ${size} text-red-500 font-bold`}><i className="fas fa-minus-circle"></i><span>{Math.abs(numCount)} BINTANG</span></div>);
+            const starCount = Math.max(0, Math.min(5, numCount));
+            return (<div className={`flex gap-0.5 ${size} text-[#FFD700]`}>{[...Array(5)].map((_, i) => (<i key={i} className={`${i < starCount ? "fas" : "far"} fa-star drop-shadow-[0_0_2px_rgba(255,215,0,0.5)]`}></i>))}</div>);
+        }
+
+        function MediaModal({ src, badgeText, badgeClass, onClose }) {
+            if (!src) return null;
+            const isVideo = src.startsWith("data:video/") || src.toLowerCase().match(/\.(mp4|webm|ogg|mov)(\?|$)/i);
+            return (
+                <div className="lightbox-overlay" onClick={onClose}>
+                    <div className="lightbox-close" onClick={onClose}><i className="fas fa-times"></i></div>
+                    <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                        {isVideo ? <video controls autoPlay playsInline className="lightbox-img bg-black" style={{ width: '100%', maxHeight: '80vh' }}><source src={src} />Browser Anda tidak mendukung tag video.</video> : <img src={src} className="lightbox-img" />}
+                        {badgeText && <div className={`lightbox-badge badge-base ${badgeClass}`}>{badgeText}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function PasswordDisplay({ password }) {
+            const [show, setShow] = useState(false);
+            return (
+                <div className="flex justify-between items-center w-full">
+                    <span className={show ? "font-mono font-bold text-white drop-shadow-md" : "font-mono font-bold text-slate-500"}>{show ? password : "••••••••"}</span>
+                    <button onClick={() => setShow(!show)} className="text-xs text-gold-primary hover:text-white transition drop-shadow-md"><i className={`fas ${show ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
+                </div>
+            );
+        }
+
+        function StatusBadge({ status }) {
+            let colorClass = 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+            if (status === 'Active') colorClass = 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.2)]';
+            else if (status === 'Pending') colorClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            else if (status === 'Blocked' || status === 'Non-Active') colorClass = 'bg-red-500/20 text-red-400 border-red-500/30';
+            return <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}>{status}</span>;
+        }
+
+        function FullProfileCard({ user, type }) {
+            const isPaskib = type === 'paskibraka';
+            const badgeClass = isPaskib ? getBadgeClass(user.penugasan) : 'badge-gold';
+            return (
+                <div className="space-y-3 text-sm animate-in">
+                    <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
+                        <div className="bg-white/5 p-2 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">DATA UTAMA</div>
+                        <div className="p-4 space-y-3">
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Peran</span><span className="font-bold text-gold-primary uppercase drop-shadow">{type}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">{isPaskib ? 'NIK' : 'Username'}</span><span className="font-bold text-white drop-shadow">{isPaskib ? user.nik : user.username}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lengkap</span><span className="font-bold text-white text-right drop-shadow">{user.nama}</span></div>
+                            <div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Nama Lapangan</span><span className="font-bold text-gold-gradient">{user.lapangan}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Status Akun</span><StatusBadge status={user.status} /></div>
+                        </div>
+                    </div>
+                    <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden shadow-lg backdrop-blur-sm">
+                        <div className="bg-white/5 p-2 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5">DETAIL & KEAMANAN</div>
+                        <div className="p-4 space-y-3">
+                            {isPaskib ? (
+                                <><div className="flex justify-between border-b border-white/5 pb-2"><span className="text-slate-400">Asal Sekolah</span><span className="font-bold text-white text-right drop-shadow">{user.sekolah}</span></div><div className="flex justify-between items-center border-b border-white/5 pb-2"><span className="text-slate-400">Penugasan</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} badge-base`}>{user.penugasan}</span></div>
+                                    <div className="flex justify-between border-b border-white/5 pb-2">
+                                        <span className="text-slate-400">Jenis Kelamin</span>
+                                        <span className="font-bold text-white text-right drop-shadow">{user.jenisKelamin || '-'}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex justify-between items-center border-b border-white/5 pb-2"><span className="text-slate-400">Jabatan</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} badge-base`}>{user.jabatan}</span></div>
+                            )}
+                            <div className="flex flex-col gap-1"><span className="text-slate-400 text-xs">Password</span><div className="bg-black/30 p-2 rounded border border-white/5 inner-shadow"><PasswordDisplay password={user.password} /></div></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TrainingFeedbackForm({ user, role, onBack }) {
+            const today = new Date().toISOString().split('T')[0];
+            const [form, setForm] = useState({ aspect: 'Umum', rating: 5, content: '', date: today });
+            const [loading, setLoading] = useState(false);
+            const ASPECTS = ['Umum', 'Materi Latihan', 'Fisik & Stamina', 'Kedisiplinan', 'Konsumsi/Logistik', 'Sarana Prasarana'];
+
+            const handleSubmit = () => {
+                if (!form.content) return alert("Mohon isi detail masukan/evaluasi.");
+                setLoading(true);
+                const now = new Date();
+                const payload = {
+                    role: role === 'paskibraka' ? 'Paskibraka' : 'Pelatih',
+                    senderName: user.nama, date: form.date,
+                    time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                    aspect: form.aspect, rating: form.rating, content: form.content
+                };
+                api.run('addTrainingFeedback', payload).then(res => {
+                    setLoading(false); alert(res.message || "Berhasil dikirim!"); onBack();
+                }).catch(e => { setLoading(false); alert("Gagal: " + e); });
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-6 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none text-center">
+                        <h3 className="font-black text-white uppercase tracking-tight text-lg">EVALUASI PELATIHAN</h3>
+                        <p className="text-[10px] text-slate-400">Feedback harian untuk kemajuan bersama</p>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+                        <div><label className="block text-slate-400 text-xs font-bold mb-2">Tanggal Latihan</label><input type="date" className="w-full p-2 os-input rounded-xl text-sm" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></div>
+                        <div><label className="block text-slate-400 text-xs font-bold mb-2">Aspek Evaluasi</label><div className="grid grid-cols-2 gap-2">{ASPECTS.map(a => (<button key={a} onClick={() => setForm({ ...form, aspect: a })} className={`py-2 px-1 rounded-lg text-[10px] font-bold border transition ${form.aspect === a ? 'bg-[#FFD700] text-black border-[#FFD700]' : 'bg-white/5 border-white/10 text-slate-400'}`}>{a}</button>))}</div></div>
+                        <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center">
+                            <label className="block text-slate-400 text-xs font-bold mb-3">Rating Pelaksanaan</label>
+                            <div className="flex justify-center gap-3">{[1, 2, 3, 4, 5].map(star => (<i key={star} onClick={() => setForm({ ...form, rating: star })} className={`fas fa-star text-3xl cursor-pointer transition ${star <= form.rating ? 'text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]' : 'text-slate-700'}`}></i>))}</div>
+                            <div className="text-xs font-bold text-[#FFD700] mt-2">{form.rating} / 5 Bintang</div>
+                        </div>
+                        <div><label className="block text-slate-400 text-xs font-bold mb-2">Detail Masukan / Kritik / Saran</label><textarea rows="5" className="w-full p-4 os-input rounded-xl text-sm" placeholder="Tuliskan evaluasi Anda..." value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}></textarea></div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 z-10 flex-none flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400 hover:text-white">BATAL</button>
+                        <button disabled={loading} onClick={handleSubmit} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold">{loading ? "MENGIRIM..." : "KIRIM EVALUASI"}</button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- KOMPONEN RUANG MATERI ---
+        function MateriView({ user, role, onBack }) {
+            const [materi, setMateri] = React.useState([]);
+            const [view, setView] = React.useState('list');
+            const [loading, setLoading] = React.useState(false);
+            const [searchQuery, setSearchQuery] = React.useState('');
+
+            const [form, setForm] = React.useState({ judul: '', deskripsi: '' });
+            const [lampiranList, setLampiranList] = React.useState([]); // State Multi Lampiran
+            const [uploadProgress, setUploadProgress] = React.useState(0);
+            const [previewMateri, setPreviewMateri] = React.useState(null);
+
+            const loadMateri = () => { setLoading(true); api.run('getMateri').then(res => { setMateri(res || []); setLoading(false); }).catch(err => { console.error(err); setLoading(false); }); };
+            React.useEffect(() => { loadMateri(); }, []);
+
+            const handleAddFile = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 10 * 1024 * 1024) return alert("Satu file maksimal 10MB!");
+                    setLampiranList([...lampiranList, { id: Date.now(), tipe: 'File', file: file, nama: file.name }]);
+                }
+                e.target.value = null; // reset
+            };
+
+            const handleAddLink = () => {
+                const url = prompt("Masukkan Tautan/Link (contoh: https://youtube.com/...)");
+                if (url) {
+                    const nama = prompt("Masukkan Judul untuk Tautan ini:", "Tautan Eksternal");
+                    setLampiranList([...lampiranList, { id: Date.now(), tipe: 'Link', url: url, nama: nama || 'Tautan' }]);
+                }
+            };
+
+            const handleRemoveLampiran = (id) => setLampiranList(lampiranList.filter(l => l.id !== id));
+
+            const processLampiran = async () => {
+                let processed = [];
+                for (let item of lampiranList) {
+                    if (item.tipe === 'File' && item.file) {
+                        const base64 = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                            reader.readAsDataURL(item.file);
+                        });
+                        processed.push({ tipe: 'File', nama: item.nama, fileBase64: base64, fileMime: item.file.type });
+                    } else {
+                        processed.push({ tipe: 'Link', nama: item.nama, url: item.url });
+                    }
+                }
+                return processed;
+            };
+
+            const handleUpload = async () => {
+                if (!form.judul || !form.deskripsi) return alert("Judul dan Deskripsi wajib diisi!");
+                if (lampiranList.length === 0) return alert("Masukkan minimal 1 File atau Tautan!");
+
+                setLoading(true); setUploadProgress(10);
+                try {
+                    const payload = {
+                        tanggal: new Date().toISOString().split('T')[0],
+                        pengunggah: user.nama + ` (${role})`,
+                        judul: form.judul, deskripsi: form.deskripsi,
+                        lampiran: await processLampiran()
+                    };
+
+                    setUploadProgress(40);
+                    let simProgress = 40;
+                    const progressInterval = setInterval(() => {
+                        simProgress += Math.floor(Math.random() * 5) + 2;
+                        if (simProgress > 90) simProgress = 90;
+                        setUploadProgress(simProgress);
+                    }, 500);
+
+                    const res = await api.run('addMateri', payload);
+                    clearInterval(progressInterval);
+                    setUploadProgress(100);
+                    setTimeout(() => { alert(res.message); loadMateri(); setView('list'); setUploadProgress(0); setLampiranList([]); setForm({ judul: '', deskripsi: '' }); }, 500);
+                } catch (err) {
+                    setLoading(false); setUploadProgress(0); alert("Terjadi kesalahan sistem saat mengunggah.");
+                }
+            };
+
+            const handleDelete = (id) => { if (confirm("Yakin ingin menghapus materi ini?")) { setLoading(true); api.run('deleteMateri', id).then(res => { alert(res.message); loadMateri(); }); } };
+
+            const handleDownload = (lampiran) => {
+                if (lampiran.fileBase64) {
+                    const link = document.createElement('a');
+                    link.href = `data:${lampiran.fileMime};base64,${lampiran.fileBase64}`;
+                    link.download = lampiran.nama || 'Lampiran';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (lampiran.url) {
+                    const fileIdMatch = String(lampiran.url).match(/[-\w]{25,}/);
+                    const fileId = fileIdMatch ? fileIdMatch[0] : lampiran.url;
+                    window.open(`https://drive.google.com/uc?export=download&id=${fileId}`, '_blank');
+                }
+            };
+            // ==========================================
+            // HTML: TIMPA BLOK KODE `if (previewMateri)`
+            // ==========================================
+            // ==========================================
+            // HTML: TIMPA BLOK KODE `if (previewMateri)`
+            // ==========================================
+            if (previewMateri) {
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center mb-4 flex-none">
+                            <button onClick={() => setPreviewMateri(null)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 transition"><i className="fas fa-arrow-left"></i></button>
+                            <h3 className="font-black text-sm text-teal-400 tracking-widest truncate ml-3 uppercase">{previewMateri.nama}</h3>
+                        </div>
+
+                        <div id="materi-container" className="flex-1 w-full bg-black/40 rounded-xl overflow-hidden relative border border-white/10 mb-4 flex items-center justify-center group">
+
+                            {/* TOMBOL FULL SCREEN */}
+                            <div className="absolute top-3 right-3 flex gap-2 z-[70] opacity-90 hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => {
+                                    const container = document.getElementById('materi-container');
+                                    const videoElem = document.getElementById('materi-video');
+                                    const btn = e.currentTarget;
+                                    const isNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+                                    if (container) {
+                                        const isFauxFullscreen = container.classList.contains('ios-fullscreen');
+
+                                        if (!isNativeFullscreen && !isFauxFullscreen) {
+                                            // MASUK FULLSCREEN
+                                            if (container.requestFullscreen) {
+                                                container.requestFullscreen().catch(() => container.classList.add('ios-fullscreen'));
+                                            } else if (container.webkitRequestFullscreen) {
+                                                container.webkitRequestFullscreen();
+                                            } else if (videoElem && videoElem.webkitEnterFullscreen) {
+                                                videoElem.webkitEnterFullscreen();
+                                            } else {
+                                                container.classList.add('ios-fullscreen'); // Bypass iOS
+                                            }
+                                            btn.innerHTML = '<i class="fas fa-compress mr-1"></i> KELUAR FULL SCREEN';
+                                        } else {
+                                            // KELUAR FULLSCREEN
+                                            if (isNativeFullscreen) {
+                                                if (document.exitFullscreen) document.exitFullscreen();
+                                                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                            }
+                                            if (isFauxFullscreen) {
+                                                container.classList.remove('ios-fullscreen');
+                                            }
+                                            btn.innerHTML = '<i class="fas fa-expand mr-1"></i> FULL SCREEN';
+                                        }
+                                    }
+                                }} className="px-3 py-1.5 bg-purple-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-purple-600 backdrop-blur-sm transition flex items-center">
+                                    <i className="fas fa-expand mr-1"></i> FULL SCREEN
+                                </button>
+                            </div>
+
+                            {previewMateri.fileBase64 ? (
+                                /* JIKA VIDEO / GAMBAR / PDF LOKAL MENGGUNAKAN DATA URI */
+                                previewMateri.fileMime?.includes('video') ? (
+                                    <video id="materi-video" controls controlsList="nodownload" src={`data:${previewMateri.fileMime};base64,${previewMateri.fileBase64}`} className="w-full rounded-lg max-h-full bg-black outline-none"></video>
+                                ) : previewMateri.fileMime?.includes('image') ? (
+                                    <img src={`data:${previewMateri.fileMime};base64,${previewMateri.fileBase64}`} className="w-full rounded-lg max-h-full object-contain" alt="Materi Gambar" />
+                                ) : (
+                                    /* PERUBAHAN: Render iframe data uri daripada pesan "Pratinjau Tidak Tersedia" */
+                                    <iframe src={`data:${previewMateri.fileMime};base64,${previewMateri.fileBase64}`} className="w-full h-full border-0 bg-white" title="Dokumen Lokal"></iframe>
+                                )
+                            ) : previewMateri.url ? (
+                                /* JIKA DOKUMEN VIA LINK GOOGLE DRIVE */
+                                <>
+                                    <iframe src={`https://drive.google.com/file/d/${String(previewMateri.url).match(/[-\w]{25,}/) ? String(previewMateri.url).match(/[-\w]{25,}/)[0] : previewMateri.url}/preview?rm=minimal`} className="w-full h-full border-0 bg-white" allow="autoplay" title="Dokumen Materi"></iframe>
+                                    <div className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed" onContextMenu={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}></div>
+                                </>
+                            ) : (
+                                <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                            )}
+                        </div>
+                        <button onClick={() => handleDownload(previewMateri)} className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 py-4 rounded-xl font-black text-white text-sm tracking-widest shadow-lg text-center flex items-center justify-center gap-2 transition hover:scale-[1.02] flex-none">
+                            <i className="fas fa-cloud-download-alt"></i> UNDUH LAMPIRAN MATERI
+                        </button>
+                    </div>
+                );
+            }
+            if (view === 'create') {
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center bg-black/50 p-4 -mx-6 -mt-6 rounded-t-[2rem] mb-2"><button onClick={() => setView('list')} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20"><i className="fas fa-arrow-left"></i></button><h3 className="font-bold tracking-widest text-teal-400">UNGGAH MATERI BARU</h3></div>
+                        <input disabled={loading} placeholder="Judul Materi" className="p-3 os-input rounded-xl font-bold" value={form.judul} onChange={e => setForm({ ...form, judul: e.target.value })} />
+                        <textarea disabled={loading} placeholder="Deskripsi Singkat" rows="3" className="p-3 os-input rounded-xl text-sm" value={form.deskripsi} onChange={e => setForm({ ...form, deskripsi: e.target.value })}></textarea>
+
+                        <div className="bg-black/30 p-4 rounded-xl border border-white/10">
+                            <label className="text-xs font-bold text-teal-400 mb-3 block">LAMPIRAN (Bisa lebih dari satu)</label>
+
+                            <div className="space-y-2 mb-4">
+                                {lampiranList.map((l, i) => (
+                                    <div key={l.id} className="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/10">
+                                        <div className="flex items-center gap-2 text-xs text-white truncate"><i className={`fas ${l.tipe === 'File' ? 'fa-file-alt text-orange-400' : 'fa-link text-blue-400'}`}></i> <span className="truncate max-w-[200px]">{l.nama}</span></div>
+                                        <button onClick={() => handleRemoveLampiran(l.id)} className="text-red-400 hover:text-red-500 p-1"><i className="fas fa-times"></i></button>
+                                    </div>
+                                ))}
+                                {lampiranList.length === 0 && <div className="text-[10px] text-slate-500 italic text-center py-2">Belum ada lampiran ditambahkan.</div>}
+                            </div>
+
+                            <div className="flex gap-2">
+                                <label className="flex-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-2 rounded-lg text-center cursor-pointer transition border border-white/20">
+                                    <i className="fas fa-upload mr-1"></i> TAMBAH FILE
+                                    <input type="file" className="hidden" onChange={handleAddFile} disabled={loading} />
+                                </label>
+                                <button onClick={handleAddLink} disabled={loading} className="flex-1 bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-2 rounded-lg text-center transition border border-white/20"><i className="fas fa-link mr-1"></i> TAMBAH TAUTAN</button>
+                            </div>
+                        </div>
+
+                        {loading && (
+                            <div className="w-full bg-black/50 rounded-full h-5 mt-2 overflow-hidden border border-white/20 relative shadow-inner">
+                                <div className="bg-gradient-to-r from-teal-500 to-emerald-400 h-5 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white tracking-widest">{uploadProgress}% MENGUNGGAH...</div>
+                            </div>
+                        )}
+                        <button disabled={loading} onClick={handleUpload} className={`w-full ${loading ? 'bg-slate-700' : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:scale-[1.02]'} py-4 rounded-xl font-black text-white text-sm tracking-widest mt-2 shadow-lg transition-all`}>{loading ? "MEMPROSES..." : "PUBLIKASIKAN MATERI"}</button>
+                    </div>
+                );
+            }
+
+            const filteredMateri = materi.filter(m => m.judul.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center mb-4"><button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20"><i className="fas fa-arrow-left"></i></button><h3 className="font-black text-sm text-teal-400 tracking-widest">RUANG MATERI</h3></div>
+                    {(role === 'admin' || role === 'pelatih') && <button onClick={() => setView('create')} className="w-full bg-teal-600/20 text-teal-400 border border-teal-500/30 p-4 rounded-xl mb-4 text-xs font-black shadow-lg uppercase tracking-widest hover:bg-teal-600/40 transition"><i className="fas fa-plus mr-2"></i> TAMBAH MATERI BARU</button>}
+                    <div className="relative mb-4"><i className="fas fa-search absolute top-3.5 left-3.5 text-slate-400 text-xs"></i><input type="text" placeholder="Cari judul materi..." className="w-full p-2.5 pl-9 os-input rounded-xl text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+
+                    {loading ? <div className="loader mx-auto mt-4"></div> : filteredMateri.length === 0 ? <p className="text-center text-xs text-slate-500 py-6">Belum ada materi dibagikan.</p> : (
+                        <div className="space-y-4">
+                            {filteredMateri.map(m => {
+                                const dateObj = new Date(m.tanggal || m.waktu);
+                                const formattedDateTime = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}, ${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')} WIB`;
+
+                                // Parse JSON Data untuk kompatibilitas lama & baru
+                                let lampiranArr = [];
+                                try { lampiranArr = JSON.parse(m.linkData); } catch (e) { lampiranArr = [{ tipe: m.tipe, nama: 'Lampiran Utama', url: m.linkData }]; }
+
+                                return (
+                                    <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-xl flex flex-col relative group hover:border-teal-500/40 transition">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white bg-teal-500/30 border border-teal-500/50"><i className="fas fa-book-open"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-white text-base">{m.judul}</h4>
+                                                    <p className="text-[9px] text-slate-400 uppercase tracking-wider">{m.pengunggah}, {formattedDateTime}</p>
+                                                </div>
+                                            </div>
+                                            {(role === 'admin' || role === 'pelatih') && <button onClick={() => handleDelete(m.id)} className="text-red-500/70 hover:text-red-500 text-xs transition p-2 bg-red-500/10 rounded-lg"><i className="fas fa-trash"></i></button>}
+                                        </div>
+                                        <div className="text-sm text-slate-300 mb-4 mt-2 ml-1 border-l-2 border-white/10 pl-3 py-1 max-h-40 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                                            {m.deskripsi}
+                                        </div>
+
+                                        {/* INI KODE BARU UNTUK PREVIEW INLINE MATERI */}
+                                        <div className="space-y-4 mt-4 border-t border-white/10 pt-4">
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-paperclip mr-1"></i> Daftar Lampiran Materi:</div>
+                                            <div className="flex flex-col gap-4">
+                                                {lampiranArr.map((lam, idx) => (
+                                                    <div key={idx} className="bg-black/40 rounded-xl border border-white/5 p-3">
+                                                        <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                <i className={`fas ${lam.tipe === 'File' ? 'fa-file-alt text-orange-400' : 'fa-link text-blue-400'} text-sm flex-shrink-0`}></i>
+                                                                <span className="text-xs text-[#FFD700] truncate font-bold uppercase">{lam.nama}</span>
+                                                            </div>
+                                                            {lam.tipe === 'Link' ? (
+                                                                <button onClick={() => window.open(lam.url.startsWith('http') ? lam.url : 'https://' + lam.url, '_blank')} className="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-[9px] font-bold hover:bg-blue-500/40 transition flex items-center gap-1"><i className="fas fa-external-link-alt"></i> BUKA TAUTAN</button>
+                                                            ) : (
+                                                                <button onClick={() => handleDownload(lam)} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded text-[9px] font-bold hover:bg-emerald-500/40 transition flex items-center gap-1"><i className="fas fa-download"></i> UNDUH</button>
+                                                            )}
+                                                        </div>
+
+                                                        {/* BOKS PRATINJAU LANGSUNG (INLINE PREVIEW) */}
+                                                        {lam.tipe === 'File' && (
+                                                            <div id={`materi-media-${m.id}-${idx}`} className="w-full h-64 md:h-[400px] rounded-lg overflow-hidden border border-white/10 relative bg-black/60 flex items-center justify-center group">
+
+                                                                {/* TOMBOL FULL SCREEN */}
+                                                                <div className="absolute top-3 right-3 flex gap-2 z-[70] opacity-90 hover:opacity-100 transition-opacity">
+                                                                    <button onClick={(e) => {
+                                                                        const container = document.getElementById(`materi-media-${m.id}-${idx}`);
+                                                                        const videoElem = container.querySelector('video');
+                                                                        const btn = e.currentTarget;
+                                                                        const isNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+                                                                        if (container) {
+                                                                            const isFauxFullscreen = container.classList.contains('ios-fullscreen');
+
+                                                                            if (!isNativeFullscreen && !isFauxFullscreen) {
+                                                                                if (container.requestFullscreen) {
+                                                                                    container.requestFullscreen().catch(() => container.classList.add('ios-fullscreen'));
+                                                                                } else if (container.webkitRequestFullscreen) {
+                                                                                    container.webkitRequestFullscreen();
+                                                                                } else if (videoElem && videoElem.webkitEnterFullscreen) {
+                                                                                    videoElem.webkitEnterFullscreen();
+                                                                                } else {
+                                                                                    container.classList.add('ios-fullscreen');
+                                                                                }
+                                                                                btn.innerHTML = '<i class="fas fa-compress mr-1"></i> KELUAR FULL SCREEN';
+                                                                            } else {
+                                                                                if (isNativeFullscreen) {
+                                                                                    if (document.exitFullscreen) document.exitFullscreen();
+                                                                                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                                                }
+                                                                                if (isFauxFullscreen) {
+                                                                                    container.classList.remove('ios-fullscreen');
+                                                                                }
+                                                                                btn.innerHTML = '<i class="fas fa-expand mr-1"></i> FULL SCREEN';
+                                                                            }
+                                                                        }
+                                                                    }} className="px-3 py-1.5 bg-purple-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-purple-600 backdrop-blur-sm transition flex items-center">
+                                                                        <i className="fas fa-expand mr-1"></i> FULL SCREEN
+                                                                    </button>
+                                                                </div>
+
+                                                                {/* LOGIKA RENDER MEDIA */}
+                                                                {lam.fileBase64 ? (
+                                                                    lam.fileMime?.includes('video') ? (
+                                                                        <video controls controlsList="nodownload" src={`data:${lam.fileMime};base64,${lam.fileBase64}`} className="w-full max-h-full bg-black outline-none"></video>
+                                                                    ) : lam.fileMime?.includes('image') ? (
+                                                                        <img src={`data:${lam.fileMime};base64,${lam.fileBase64}`} className="w-full max-h-full object-contain" />
+                                                                    ) : (
+                                                                        <iframe src={`data:${lam.fileMime};base64,${lam.fileBase64}`} className="w-full h-full border-0 bg-white" title="Dokumen"></iframe>
+                                                                    )
+                                                                ) : lam.url ? (
+                                                                    <>
+                                                                        <iframe src={`https://drive.google.com/file/d/${String(lam.url).match(/[-\w]{25,}/) ? String(lam.url).match(/[-\w]{25,}/)[0] : lam.url}/preview?rm=minimal`} className="w-full h-full border-0 bg-white" allow="autoplay" title="Dokumen Materi"></iframe>
+                                                                        <div className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed" onContextMenu={(e) => e.preventDefault()}></div>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // --- KOMPONEN MANAJEMEN TUGAS ---
+        function TugasManajemenView({ user, role, onBack }) {
+            const [isEditing, setIsEditing] = React.useState(false);
+            const [editId, setEditId] = React.useState(null);
+            const [tugas, setTugas] = React.useState([]);
+            const [paskibList, setPaskibList] = React.useState([]);
+            const [view, setView] = React.useState('list');
+            const [form, setForm] = React.useState({ waktu_mulai: '', waktu_selesai: '', judul: '', deskripsi: '', target_type: 'all', target_list: [], kolom: [{ id: Date.now(), judul: '', deskripsi: '' }] });
+            const [lampiranTugas, setLampiranTugas] = React.useState([]); // Multi lampiran tugas
+
+            const [selectedTugas, setSelectedTugas] = React.useState(null);
+            const [selectedUserNik, setSelectedUserNik] = React.useState(null);
+            const [pengumpulan, setPengumpulan] = React.useState([]);
+            const [komentar, setKomentar] = React.useState('');
+            const [activeKomentarId, setActiveKomentarId] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [previewTugasLampiran, setPreviewTugasLampiran] = React.useState(null);
+
+            const loadTugas = () => { setLoading(true); api.run('getTugas', role).then(res => { setTugas(res || []); setLoading(false); }); };
+            React.useEffect(() => { loadTugas(); api.run('getAdminDashboardData').then(d => { if (d && d.paskibraka) setPaskibList(d.paskibraka.list.filter(x => x.status === 'Active')); }); }, []);
+            React.useEffect(() => { setSearchQuery(''); }, [view, selectedUserNik]);
+
+            const handleToggleTarget = (nik) => { const isSelected = form.target_list.includes(nik); setForm({ ...form, target_list: isSelected ? form.target_list.filter(n => n !== nik) : [...form.target_list, nik] }); };
+            const handleAddKolom = () => setForm({ ...form, kolom: [...form.kolom, { id: Date.now(), judul: '', deskripsi: '' }] });
+            const handleUpdateKolom = (id, field, val) => setForm({ ...form, kolom: form.kolom.map(k => k.id === id ? { ...k, [field]: val } : k) });
+            const handleRemoveKolom = (id) => setForm({ ...form, kolom: form.kolom.filter(k => k.id !== id) });
+
+            // LOGIKA LAMPIRAN TUGAS
+            const handleAddFileTugas = (e) => { const file = e.target.files[0]; if (file) setLampiranTugas([...lampiranTugas, { id: Date.now(), tipe: 'File', file: file, nama: file.name }]); e.target.value = null; };
+            const handleAddLinkTugas = () => { const url = prompt("Masukkan Tautan:"); if (url) setLampiranTugas([...lampiranTugas, { id: Date.now(), tipe: 'Link', url: url, nama: prompt("Judul Tautan:", "Tautan") || 'Tautan' }]); };
+            const handleRemoveLampiranTugas = (id) => setLampiranTugas(lampiranTugas.filter(l => l.id !== id));
+
+            const processLampiranTugas = async () => {
+                let processed = [];
+                for (let item of lampiranTugas) {
+                    if (item.tipe === 'File' && item.file) {
+                        const base64 = await new Promise(res => { const reader = new FileReader(); reader.onload = e => res(e.target.result.split(',')[1]); reader.readAsDataURL(item.file); });
+                        processed.push({ tipe: 'File', nama: item.nama, fileBase64: base64, fileMime: item.file.type });
+                    } else if (item.tipe === 'Link') { processed.push({ tipe: 'Link', nama: item.nama, url: item.url }); }
+                    else { processed.push(item); } // Existing old file during edit
+                }
+                return processed;
+            };
+
+            const handleBuatTugas = async () => {
+                if (!form.judul || !form.deskripsi || !form.waktu_mulai || !form.waktu_selesai) return alert("Lengkapi data jadwal, judul, dan deskripsi utama!");
+                if (form.target_type === 'specific' && form.target_list.length === 0) return alert("Pilih minimal 1 target Paskibraka!");
+                if (form.kolom.length === 0 || form.kolom.some(k => !k.judul)) return alert("Pastikan seluruh judul kolom pengumpulan terisi!");
+
+                setLoading(true);
+                const finalPayload = { ...form, pembuat: user.nama, lampiran: await processLampiranTugas() };
+
+                try {
+                    if (isEditing) {
+                        const res = await api.run('editTugas', { ...finalPayload, id: editId });
+                        alert(res.message); setIsEditing(false); setEditId(null);
+                    } else {
+                        const res = await api.run('addTugas', finalPayload);
+                        alert(res.message);
+                    }
+                    loadTugas(); setView('list'); setLoading(false);
+                } catch (err) { alert(err); setLoading(false); }
+            };
+
+            const bukaTugas = (t) => { setSelectedTugas(t); setSelectedUserNik(null); setView('detail'); setLoading(true); api.run('getPengumpulan', t.id).then(res => { setPengumpulan(res || []); setLoading(false); }); };
+            // TIMPA FUNGSI LAMA DENGAN INI
+            const kirimKomentar = (id_pengumpulan) => {
+                if (!komentar) return;
+
+                const teksKomentar = komentar;
+
+                // 1. Bersihkan input INSTAN
+                setKomentar('');
+                setActiveKomentarId(null);
+
+                // 2. Tampilkan langsung di layar (Optimistic Update)
+                const komentarBaru = {
+                    username: user.nama,
+                    role: 'Paskibraka',
+                    teks: teksKomentar,
+                    waktu: new Date().toISOString()
+                };
+
+                setPengumpulan(prev => prev.map(item => {
+                    if (item.id_pengumpulan === id_pengumpulan) {
+                        return { ...item, komentar: [...(item.komentar || []), komentarBaru] };
+                    }
+                    return item;
+                }));
+
+                // 3. Kirim via background process
+                api.run('addKomentarTugas', {
+                    id_pengumpulan: id_pengumpulan,
+                    username: user.nama,
+                    role: 'Paskibraka',
+                    teks: teksKomentar
+                }).catch(err => console.error("Gagal mengirim komentar: ", err));
+            };
+
+            const handleDownload = (lampiran) => {
+                if (lampiran.fileBase64) {
+                    const link = document.createElement('a');
+                    link.href = `data:${lampiran.fileMime};base64,${lampiran.fileBase64}`;
+                    link.download = lampiran.nama || 'Lampiran';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (lampiran.url) {
+                    const fileIdMatch = String(lampiran.url).match(/[-\w]{25,}/);
+                    const fileId = fileIdMatch ? fileIdMatch[0] : lampiran.url;
+                    window.open(`https://drive.google.com/uc?export=download&id=${fileId}`, '_blank');
+                }
+            };
+            if (previewTugasLampiran) {
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center mb-4 flex-none">
+                            <button onClick={() => setPreviewTugasLampiran(null)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 transition"><i className="fas fa-arrow-left"></i></button>
+                            <h3 className="font-black text-sm text-purple-400 tracking-widest truncate ml-3 uppercase">{previewTugasLampiran.nama}</h3>
+                        </div>
+                        <div className="flex-1 w-full bg-black/40 rounded-xl overflow-hidden relative border border-white/10 mb-4 flex items-center justify-center">
+                            {previewTugasLampiran.url ? (<>
+                                <iframe src={`https://drive.google.com/file/d/${previewTugasLampiran.url.match(/[-\w]{25,}/) ? previewTugasLampiran.url.match(/[-\w]{25,}/)[0] : previewTugasLampiran.url}/preview?rm=minimal`} className="w-full h-full border-0 bg-white" allow="autoplay" title="Dokumen Lampiran Tugas"></iframe>
+                                {/* INVISIBLE SHIELD SUPER */}
+                                <div
+                                    className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed"
+                                    title="Akses Lanjutan Dikunci"
+                                    onContextMenu={(e) => e.preventDefault()}>
+                                </div>
+                            </>
+                            ) : previewTugasLampiran.fileBase64 ? (
+                                previewTugasLampiran.fileMime.includes('video') ? (
+                                    <video controls src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full rounded-lg max-h-full bg-black"></video>
+                                ) : previewTugasLampiran.fileMime.includes('image') ? (
+                                    <img src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full rounded-lg max-h-full object-contain" />
+                                ) : (
+                                    <iframe src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full h-full border-0 bg-white" title="Dokumen Lokal"></iframe>
+                                )
+                            ) : (
+                                <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                            )}
+                        </div>
+                        <button onClick={() => handleDownload(previewTugasLampiran)} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 py-4 rounded-xl font-black text-white text-sm tracking-widest shadow-lg text-center flex items-center justify-center gap-2 transition hover:scale-[1.02] flex-none">
+                            <i className="fas fa-cloud-download-alt"></i> UNDUH LAMPIRAN INI
+                        </button>
+                    </div>
+                );
+            }
+            if (view === 'create') return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center bg-black/50 p-4 -mx-6 -mt-6 rounded-t-[2rem] mb-2"><button onClick={() => setView('list')} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20"><i className="fas fa-arrow-left"></i></button><h3 className="font-bold tracking-widest text-[#FFD700]">{isEditing ? 'EDIT TUGAS' : 'TUGAS BARU'}</h3></div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div><label className="text-[10px] font-bold text-slate-400">DIBERIKAN (MULAI)</label><input type="datetime-local" className="w-full p-3 os-input rounded-xl text-xs" value={form.waktu_mulai} onChange={e => setForm({ ...form, waktu_mulai: e.target.value })} /></div>
+                        <div><label className="text-[10px] font-bold text-slate-400">BATAS AKHIR (DL)</label><input type="datetime-local" className="w-full p-3 os-input rounded-xl text-xs" value={form.waktu_selesai} onChange={e => setForm({ ...form, waktu_selesai: e.target.value })} /></div>
+                    </div>
+                    <input placeholder="Judul Penugasan Utama" className="p-3 os-input rounded-xl font-bold" value={form.judul} onChange={e => setForm({ ...form, judul: e.target.value })} />
+                    <textarea placeholder="Deskripsi Tugas Utama" rows="3" className="p-3 os-input rounded-xl text-sm" value={form.deskripsi} onChange={e => setForm({ ...form, deskripsi: e.target.value })}></textarea>
+
+                    {/* LAMPIRAN TUGAS */}
+                    <div className="bg-black/30 p-4 rounded-xl border border-white/10">
+                        <label className="text-xs font-bold text-purple-400 mb-3 block"><i className="fas fa-paperclip mr-1"></i> LAMPIRAN PENDUKUNG (OPSIONAL)</label>
+                        <div className="space-y-2 mb-4">
+                            {lampiranTugas.map((l, i) => (
+                                <div key={l.id || i} className="flex justify-between items-center bg-white/5 p-2 rounded-lg border border-white/10">
+                                    <div className="flex items-center gap-2 text-xs text-white truncate"><i className={`fas ${l.tipe === 'File' ? 'fa-file-alt text-orange-400' : 'fa-link text-blue-400'}`}></i> <span className="truncate">{l.nama}</span></div>
+                                    <button onClick={() => handleRemoveLampiranTugas(l.id)} className="text-red-400 hover:text-red-500 p-1"><i className="fas fa-times"></i></button>
+                                </div>
+                            ))}
+                            {lampiranTugas.length === 0 && <div className="text-[10px] text-slate-500 italic text-center py-2">Belum ada lampiran ditambahkan.</div>}
+                        </div>
+                        <div className="flex gap-2">
+                            <label className="flex-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg text-center cursor-pointer transition border border-white/20"><i className="fas fa-upload mr-1"></i> FILE <input type="file" className="hidden" onChange={handleAddFileTugas} disabled={loading} /></label>
+                            <button onClick={handleAddLinkTugas} disabled={loading} className="flex-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg text-center transition border border-white/20"><i className="fas fa-link mr-1"></i> TAUTAN</button>
+                        </div>
+                    </div>
+
+                    <div className="bg-black/30 p-4 rounded-xl border border-white/10">
+                        <label className="text-xs font-bold text-[#FFD700] mb-2 block">TARGET PASKIBRAKA</label>
+                        <select className="w-full p-3 os-select rounded-xl text-sm mb-3" value={form.target_type} onChange={e => setForm({ ...form, target_type: e.target.value })}>
+                            <option value="all">SEMUA PASKIBRAKA</option>
+                            <option value="specific">PILIH SPESIFIK (CEKLIST)</option>
+                        </select>
+                        {form.target_type === 'specific' && (
+                            <div className="max-h-40 overflow-y-auto custom-scrollbar bg-black/50 p-3 rounded-lg border border-white/5 space-y-2">
+                                {paskibList.map(p => (
+                                    <label key={p.nik} className="flex items-center gap-3 cursor-pointer hover:bg-white/5 p-2 rounded">
+                                        <input type="checkbox" checked={form.target_list.includes(p.nik)} onChange={() => handleToggleTarget(p.nik)} className="w-4 h-4 accent-[#FFD700]" />
+                                        <div className="text-xs font-bold text-white">{p.nama} <span className="text-[10px] text-slate-400">({p.lapangan})</span></div>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="bg-blue-900/10 p-4 rounded-xl border border-blue-500/20">
+                        <div className="flex justify-between items-center mb-3"><label className="text-xs font-bold text-blue-400">KOLOM PENGUMPULAN DATA</label><button onClick={handleAddKolom} className="px-3 py-1 bg-blue-600/30 text-blue-400 rounded text-[10px] font-bold hover:bg-blue-600/50"><i className="fas fa-plus"></i> TAMBAH KOLOM</button></div>
+                        {form.kolom.map((k, i) => (
+                            <div key={k.id} className="bg-black/50 p-3 rounded-xl border border-white/5 mb-3 relative">
+                                <div className="absolute top-2 right-2 flex gap-2"><div className="text-[10px] text-slate-500 font-bold">KOLOM #{i + 1}</div>{form.kolom.length > 1 && <button onClick={() => handleRemoveKolom(k.id)} className="text-red-500 hover:text-red-400 text-xs"><i className="fas fa-times"></i></button>}</div>
+                                <input placeholder="Judul Kolom (cth: Video PBB, Foto Atribut)" className="w-full p-2 os-input rounded-lg text-xs font-bold mb-2 pr-16" value={k.judul} onChange={e => handleUpdateKolom(k.id, 'judul', e.target.value)} />
+                                <textarea placeholder="Deskripsi/Instruksi Kolom ini..." rows="2" className="w-full p-2 os-input rounded-lg text-[10px]" value={k.deskripsi} onChange={e => handleUpdateKolom(k.id, 'deskripsi', e.target.value)}></textarea>
+                            </div>
+                        ))}
+                    </div>
+                    <button disabled={loading} onClick={handleBuatTugas} className="btn-green p-4 rounded-xl font-black text-sm tracking-widest mt-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]">{loading ? "MENYIMPAN..." : (isEditing ? "UPDATE TUGAS" : "SIMPAN & PUBLIKASIKAN TUGAS")}</button>
+                    {isEditing && <button onClick={() => { setIsEditing(false); setView('list'); }} className="mt-2 w-full py-3 text-xs font-bold text-slate-400 hover:text-white transition">BATAL EDIT</button>}
+                </div>
+            );
+
+            if (view === 'detail') {
+                if (!selectedUserNik) {
+                    const targetPaskibraka = selectedTugas.target_type === 'all' ? paskibList : paskibList.filter(p => selectedTugas.target_list.includes(p.nik));
+                    const filteredPaskibraka = targetPaskibraka.filter(p => p.nama.toLowerCase().includes(searchQuery.toLowerCase()) || p.nik.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                    return (
+                        <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                            <div className="flex justify-between items-center border-b border-white/10 pb-2"><button onClick={() => setView('list')} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i className="fas fa-arrow-left"></i></button><h3 className="font-bold text-[#FFD700] uppercase text-xs tracking-wider">TARGET PENUGASAN</h3></div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <h4 className="font-bold text-white text-sm">{selectedTugas.judul}</h4>
+                                <div className="text-[11px] text-slate-300 mt-2 mb-2 p-3 bg-black/40 rounded-lg border border-white/5 max-h-48 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                                    {selectedTugas.deskripsi}
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-1"><i className="fas fa-clock text-red-400"></i> Deadline: {new Date(selectedTugas.waktu_selesai).toLocaleString('id-ID')}</p>
+
+                                {/* TAMPILAN LAMPIRAN DI DETAIL TUGAS */}
+                                {selectedTugas.lampiran && selectedTugas.lampiran.length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-white/10">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2"><i className="fas fa-paperclip"></i> Lampiran Tugas:</div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            {selectedTugas.lampiran.map((lam, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-2.5 bg-black/40 rounded-lg border border-white/5 transition text-left">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <i className={`fas ${lam.tipe === 'File' ? 'fa-file-alt text-orange-400' : 'fa-link text-blue-400'} text-xs flex-shrink-0`}></i>
+                                                        <span className="text-xs text-white truncate font-medium">{lam.nama}</span>
+                                                    </div>
+                                                    <div className="flex gap-1.5 flex-shrink-0">
+                                                        <button onClick={() => { if (lam.tipe === 'File') setPreviewTugasLampiran(lam); else window.open(lam.url.startsWith('http') ? lam.url : 'https://' + lam.url, '_blank'); }} className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-[9px] font-bold hover:bg-blue-500/40 transition">PREVIEW</button>
+                                                        {lam.tipe === 'File' && <button onClick={() => handleDownload(lam)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded text-[9px] font-bold hover:bg-emerald-500/40 transition">UNDUH</button>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative"><i className="fas fa-search absolute top-3.5 left-3.5 text-slate-400 text-xs"></i><input type="text" placeholder="Cari nama Paskibraka atau NIK..." className="w-full p-2.5 pl-9 os-input rounded-xl text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest pt-1">Daftar Paskibraka:</div>
+                            {loading ? <div className="loader mx-auto mt-4"></div> : filteredPaskibraka.length === 0 ? <div className="text-center text-xs text-slate-500 py-10">Data tidak ditemukan.</div> : (
+                                <div className="space-y-2">
+                                    {filteredPaskibraka.map(p => {
+                                        const userAnswers = pengumpulan.filter(x => cleanStr(x.nik) === cleanStr(p.nik));
+                                        const totalKolom = selectedTugas.kolom.length;
+                                        // Filter ID Kolom menggunakan Set agar file ganda hanya dihitung 1 kali
+                                        const sudahIsi = new Set(userAnswers.map(x => cleanStr(x.id_kolom))).size;
+                                        const berkasDikoreksi = userAnswers.filter(x => x.status_koreksi === "Sudah Dikoreksi").length;
+                                        return (
+                                            <div key={p.nik} onClick={() => setSelectedUserNik(p.nik)} className="bg-black/30 border border-white/10 rounded-xl p-4 flex justify-between items-center cursor-pointer hover:bg-blue-500/10 hover:border-blue-500/40 transition">
+                                                <div>
+                                                    <div className="font-bold text-white text-xs flex items-center gap-1.5">{p.nama} {sudahIsi > 0 && berkasDikoreksi === sudahIsi && <i className="fas fa-clipboard-check text-green-400 text-xs" title="Sudah Dikoreksi"></i>}</div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">NIK: {p.nik} | {p.sekolah}</div>
+                                                </div>
+                                                <div className="text-right flex flex-col items-end gap-1">
+                                                    {sudahIsi === 0 ? <span className="text-[9px] font-bold bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Belum Mengisi</span> : sudahIsi === totalKolom ? <span className="text-[9px] font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Lengkap ({sudahIsi}/{totalKolom})</span> : <span className="text-[9px] font-bold bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">Parsial ({sudahIsi}/{totalKolom})</span>}
+                                                    {sudahIsi > 0 && <span className="text-[8px] text-slate-400 italic">Koreksi: {berkasDikoreksi}/{sudahIsi}</span>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+
+                const selectedPaskib = paskibList.find(p => String(p.nik) === String(selectedUserNik));
+                const dataKolomUser = pengumpulan.filter(x => String(x.nik) === String(selectedUserNik)).reduce((acc, curr) => { acc[curr.id_kolom] = curr; return acc; }, {});
+
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-2"><button onClick={() => setSelectedUserNik(null)} className="px-3 py-1 rounded bg-white/5 text-xs text-slate-300 hover:bg-white/15 flex items-center gap-1"><i className="fas fa-arrow-left"></i> Kembali</button><h3 className="font-bold text-[#FFD700] uppercase text-xs tracking-wider">DETAIL KERJA</h3></div>
+                        <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl"><div className="text-[9px] uppercase text-blue-400 font-bold tracking-widest mb-0.5">Personil</div><div className="font-bold text-white text-sm">{selectedPaskib?.nama || selectedUserNik}</div><div className="text-[11px] text-slate-300">NIK: {selectedUserNik} | Sekolah: {selectedPaskib?.sekolah || '-'}</div></div>
+                        {selectedTugas.kolom.map((k, idx) => {
+                            const answer = dataKolomUser[k.id];
+                            return (
+                                <div key={k.id} className="bg-black/40 p-4 rounded-xl border border-white/10">
+                                    <div className="font-bold text-white text-xs mb-1 uppercase text-[#FFD700]">{idx + 1}. {k.judul}</div>
+                                    <div className="text-[10px] text-slate-300 mb-3 max-h-32 overflow-y-auto custom-scrollbar whitespace-pre-wrap bg-black/20 p-2.5 rounded-lg border-l-2 border-[#FFD700]/50">
+                                        {k.deskripsi || 'Tidak ada instruksi kolom.'}
+                                    </div>
+                                    {!answer ? (
+                                        <div className="text-[10px] text-red-400 font-bold italic bg-red-500/10 p-2.5 rounded-lg border border-red-500/20">
+                                            <i className="fas fa-times-circle mr-1"></i> Belum mengirimkan data untuk kolom ini
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {answer.mediaData ? (
+                                                /* TAMBAHKAN ID PADA CONTAINER UNTUK TARGET FULLSCREEN */
+                                                <div id={`media-container-${k.id}`} className="w-full h-80 md:h-[400px] rounded-lg overflow-hidden border border-white/10 mb-2 relative bg-black/50 flex items-center justify-center group">
+
+                                                    {/* ========================================== */}
+                                                    {/* KODE BARU: TOMBOL PLAY & FULL SCREEN */}
+                                                    {/* ========================================== */}
+                                                    <div className="absolute top-3 right-3 flex gap-2 z-[70] opacity-90 hover:opacity-100 transition-opacity">
+                                                        {/* Tombol Full Screen (Bisa untuk Dokumen, PDF, Gambar, Video) */}
+                                                        <button onClick={(e) => {
+                                                            const container = document.getElementById(`media-container-${k.id}`);
+                                                            const videoElem = document.getElementById(`media-${k.id}`);
+                                                            const btn = e.currentTarget;
+                                                            const isNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+                                                            if (container) {
+                                                                const isFauxFullscreen = container.classList.contains('ios-fullscreen');
+
+                                                                if (!isNativeFullscreen && !isFauxFullscreen) {
+                                                                    // MASUK FULLSCREEN
+                                                                    if (container.requestFullscreen) {
+                                                                        container.requestFullscreen().catch(() => container.classList.add('ios-fullscreen'));
+                                                                    } else if (container.webkitRequestFullscreen) {
+                                                                        container.webkitRequestFullscreen();
+                                                                    } else if (videoElem && videoElem.webkitEnterFullscreen) {
+                                                                        videoElem.webkitEnterFullscreen();
+                                                                    } else {
+                                                                        container.classList.add('ios-fullscreen'); // Bypass iOS / Safari
+                                                                    }
+                                                                    btn.innerHTML = '<i class="fas fa-compress mr-1"></i> KELUAR FULL SCREEN';
+                                                                } else {
+                                                                    // KELUAR FULLSCREEN
+                                                                    if (isNativeFullscreen) {
+                                                                        if (document.exitFullscreen) document.exitFullscreen();
+                                                                        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                                    }
+                                                                    if (isFauxFullscreen) {
+                                                                        container.classList.remove('ios-fullscreen');
+                                                                    }
+                                                                    btn.innerHTML = '<i class="fas fa-expand mr-1"></i> FULL SCREEN';
+                                                                }
+                                                            }
+                                                        }} className="px-3 py-1.5 bg-purple-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-purple-600 backdrop-blur-sm transition flex items-center">
+                                                            <i className="fas fa-expand mr-1"></i> FULL SCREEN
+                                                        </button>
+                                                    </div>
+                                                    {/* ========================================== */}
+
+                                                    {(!answer.mediaMime || (!answer.mediaMime.includes('image') && !answer.mediaMime.includes('video'))) ? (
+                                                        <>
+                                                            <iframe
+                                                                src={`https://drive.google.com/file/d/${answer.mediaData}/preview?rm=minimal`}
+                                                                className="w-full h-full border-0 bg-white"
+                                                                allow="autoplay"
+                                                                title="Dokumen Pratinjau">
+                                                            </iframe>
+                                                            <div
+                                                                className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed"
+                                                                title="Pratinjau Dikunci"
+                                                                onContextMenu={(e) => e.preventDefault()}>
+                                                            </div>
+                                                            <a
+                                                                href={`https://drive.google.com/uc?export=download&id=${answer.mediaData}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="absolute bottom-3 right-3 px-3 py-1.5 bg-blue-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-blue-600 backdrop-blur-sm transition z-[60]"
+                                                            >
+                                                                <i className="fas fa-download mr-1"></i> UNDUH ASLI
+                                                            </a>
+                                                        </>
+                                                    ) : answer.mediaMime.includes('video') ? (
+                                                        /* TAMBAHKAN ID PADA VIDEO AGAR BISA DIPLAY LEWAT TOMBOL DI ATAS */
+                                                        <video id={`media-${k.id}`} controls controlsList="nodownload" src={`data:${answer.mediaMime};base64,${answer.mediaData}`} className="w-full rounded-lg max-h-full bg-black outline-none"></video>
+                                                    ) : answer.mediaMime.includes('image') ? (
+                                                        /* TAMBAHKAN ID PADA IMAGE */
+                                                        <img id={`media-${k.id}`} src={`data:${answer.mediaMime};base64,${answer.mediaData}`} className="w-full rounded-lg max-h-full object-contain" alt="Bukti Penugasan" />
+                                                    ) : (
+                                                        <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="p-4 bg-red-900/10 rounded-xl border border-red-500/20 text-center mb-2">
+                                                    <i className="fas fa-exclamation-triangle text-xl text-red-400 mb-2"></i>
+                                                    <span className="text-white text-xs font-bold block">Media Tidak Ditemukan / Belum Mengumpulkan</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+
+            const getBulanStr = (dateStr) => { if (!dateStr) return 'Tidak Terjadwal'; return new Date(dateStr).toLocaleString('id-ID', { month: 'long', year: 'numeric' }); };
+            const filteredTugasList = tugas.filter(t => t.judul.toLowerCase().includes(searchQuery.toLowerCase()));
+            const groupedTugas = filteredTugasList.reduce((acc, t) => { const b = getBulanStr(t.waktu_mulai); if (!acc[b]) acc[b] = []; acc[b].push(t); return acc; }, {});
+
+            return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center mb-4"><button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5"><i className="fas fa-arrow-left"></i></button><h3 className="font-black text-sm">MANAJEMEN TUGAS</h3></div>
+                    <button onClick={() => { setIsEditing(false); setEditId(null); setForm({ waktu_mulai: '', waktu_selesai: '', judul: '', deskripsi: '', target_type: 'all', target_list: [], kolom: [{ id: Date.now(), judul: '', deskripsi: '' }] }); setLampiranTugas([]); setView('create'); }} className="btn-gold p-4 rounded-xl mb-4 text-xs font-black shadow-lg uppercase tracking-widest"><i className="fas fa-plus mr-2"></i> BUAT TUGAS BARU</button>
+                    <div className="relative mb-4"><i className="fas fa-search absolute top-3.5 left-3.5 text-slate-400 text-xs"></i><input type="text" placeholder="Cari judul penugasan / nama tugas..." className="w-full p-2.5 pl-9 os-input rounded-xl text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+
+                    {loading ? <div className="loader mx-auto"></div> : Object.keys(groupedTugas).length === 0 ? <p className="text-center text-xs text-slate-500 py-6">Data tidak ditemukan.</p> : Object.keys(groupedTugas).map(bulan => (
+                        <div key={bulan} className="mb-4">
+                            <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-widest border-b border-white/10 pb-1">{bulan}</div>
+                            {groupedTugas[bulan].map(t => (
+                                <div key={t.id} onClick={() => bukaTugas(t)} className="bg-white/5 border border-white/10 p-4 rounded-xl mb-2 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/50 transition">
+                                    <div className="font-bold text-white text-sm truncate">{t.judul}</div>
+                                    <div className="text-[10px] text-slate-400 mt-1 line-clamp-3 whitespace-pre-wrap">{t.deskripsi}</div>
+                                    <div className="flex gap-4 mt-2 pt-2 border-t border-white/5 text-[9px] font-bold">
+                                        <div className="text-blue-400"><i className="fas fa-users mr-1"></i>{t.target_type === 'all' ? 'SEMUA' : `${t.target_list?.length} ORANG`}</div>
+                                        <div className="text-red-400"><i className="fas fa-clock mr-1"></i>DL: {new Date(t.waktu_selesai).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                                        {t.lampiran && t.lampiran.length > 0 && <div className="text-purple-400"><i className="fas fa-paperclip mr-1"></i>{t.lampiran.length} LAMPIRAN</div>}
+                                    </div>
+
+                                    <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+                                        <button onClick={(e) => { e.stopPropagation(); setForm({ waktu_mulai: t.waktu_mulai, waktu_selesai: t.waktu_selesai, judul: t.judul, deskripsi: t.deskripsi, target_type: t.target_type, target_list: t.target_list || [], kolom: t.kolom || [] }); setLampiranTugas(t.lampiran || []); setEditId(t.id); setIsEditing(true); setView('create'); }} className="flex-1 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-lg text-[10px] font-bold hover:bg-amber-500/20 transition flex items-center justify-center gap-1"><i className="fas fa-edit"></i> EDIT</button>
+                                        <button onClick={(e) => { e.stopPropagation(); if (confirm("Yakin ingin menghapus tugas ini permanen?")) { setLoading(true); api.run('deleteTugas', t.id).then(res => { alert(res.message); loadTugas(); }).catch(err => { alert(err); setLoading(false); }); } }} className="flex-1 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-[10px] font-bold hover:bg-red-500/20 transition flex items-center justify-center gap-1"><i className="fas fa-trash"></i> HAPUS</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+        // ==========================================
+        // KOMPONEN PENAMPIL DOKUMEN / FILE VIEWER
+        // ==========================================
+        const FileViewerModal = ({ url, mimeType, onClose }) => {
+            // Fungsi untuk mengubah link Drive biasa menjadi link Preview
+            const getEmbedUrl = (fileUrl) => {
+                if (!fileUrl) return '';
+                if (fileUrl.includes('/preview')) return fileUrl;
+
+                // Mendeteksi format link: drive.google.com/file/d/ID/...
+                const driveRegex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+                const match = fileUrl.match(driveRegex);
+                if (match && match[1]) {
+                    return `https://drive.google.com/file/d/${match[1]}/preview`;
+                }
+
+                // Mendeteksi format link: drive.google.com/open?id=ID atau uc?id=ID
+                const idRegex = /id=([a-zA-Z0-9_-]+)/;
+                const matchId = fileUrl.match(idRegex);
+                if (matchId && matchId[1]) {
+                    return `https://drive.google.com/file/d/${matchId[1]}/preview`;
+                }
+
+                return fileUrl; // Return original jika bukan link drive
+            };
+
+            const embedUrl = getEmbedUrl(url);
+
+            return (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 animate-in">
+                    <div className="bg-[#111] w-full max-w-5xl h-[90vh] rounded-2xl flex flex-col border border-white/20 shadow-2xl overflow-hidden relative">
+                        {/* Header Modal */}
+                        <div className="flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-[#050505] to-[#111]">
+                            <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                                <i className="fas fa-file-alt text-[#FFD700]"></i> Pratinjau Dokumen
+                            </h3>
+                            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition">
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        {/* Area Tampilan File */}
+                        <div className="flex-1 bg-white relative w-full h-full">
+                            {/* Loading spinner di belakang iframe */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-0">
+                                <div className="loader w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="ml-3 text-gray-500 text-sm font-bold">Memuat Dokumen...</span>
+                            </div>
+
+                            {/* Iframe Penampil (Mendukung PDF, Word, Excel, HEIC via Google Drive) */}
+                            {/* Iframe Penampil (Mendukung PDF, Word, Excel, HEIC via Google Drive) */}
+                            <iframe
+                                src={embedUrl}
+                                className="relative z-10 w-full h-full border-0"
+                                allow="autoplay"
+                                title="File Viewer"
+                            ></iframe>
+
+                            {/* INVISIBLE SHIELD: Menutup paksa Header Google Drive & Tombol Pop-out */}
+                            <div
+                                className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed"
+                                title="Akses Dokumen Dikunci"
+                                onContextMenu={(e) => e.preventDefault()}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        // ==========================================
+        // APP PASKIBRAKA UTAMA
+        // ==========================================
+
+        function PaskibApp() {
+            // Tambahkan state ini untuk fitur pratinjau
+            const [previewFile, setPreviewFile] = React.useState(null);
+            const [user, setUser] = useState(null);
+            const [view, setView] = useState('home');
+            const [loading, setLoading] = useState(false);
+            const [lightboxData, setLightboxData] = useState(null);
+
+            useEffect(() => {
+                const stored = localStorage.getItem('currentUser');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.role !== 'paskibraka') { alert("Akses Ditolak"); window.location.href = "index.html"; }
+                    else setUser(parsed.data);
+                } else {
+                    window.location.href = "index.html";
+                }
+            }, []);
+
+            const handleLogout = () => {
+                localStorage.removeItem('currentUser');
+                window.location.href = "index.html";
+            };
+
+            const handleRefreshProfile = async () => {
+                if (!user) return; setLoading(true);
+                try {
+                    const res = await api.run('loginUser', user.nik, user.password, 'paskibraka');
+                    setUser(res);
+                    localStorage.setItem('currentUser', JSON.stringify({ role: 'paskibraka', data: res }));
+                    alert("Data Profil Tersinkronisasi");
+                } catch (e) { console.error(e); } setLoading(false);
+            };
+
+            const openPhoto = (src, badgeText, badgeClass) => { if (src) setLightboxData({ src, badgeText, badgeClass }); };
+
+            const handleShowStarHistory = async (nik) => {
+                setLoading(true);
+                try {
+                    const history = await api.run('getStarHistory', nik);
+                    setView({ name: 'star-history', data: history });
+                } catch (e) { console.error(e); alert("Gagal memuat riwayat bintang"); }
+                setLoading(false);
+            };
+
+            const handleEditSuccess = (newPass) => {
+                alert("Password berhasil diubah. Silakan Login Ulang.");
+                handleLogout();
+            };
+
+            if (!user) return <div className="flex h-screen items-center justify-center"><div className="loader"></div></div>;
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                    <Background3D />
+                    <div className="w-full max-w-lg relative z-0 mt-4 mb-4">
+                        {view === 'materi' && <MateriView user={user} role="paskibraka" onBack={() => setView('home')} />}
+                        {view === 'home' && <PaskibDashboard user={user} onLogout={handleLogout} onViewEvals={() => setView('eval-list')} onEditProfile={() => setView('edit-profile')} onRefresh={handleRefreshProfile} loading={loading} onPhotoClick={openPhoto} onShowStarHistory={handleShowStarHistory} onTrainingFeedback={() => setView('training-feedback')} onViewPenugasan={() => setView('penugasan')} onViewMateri={() => setView('materi')} />}
+                        {view === 'eval-list' && <PaskibEvalList user={user} onBack={() => setView('home')} onSelectDate={(data) => setView({ name: 'eval-detail', data })} />}
+                        {view === 'edit-profile' && <EditProfile user={user} role="paskibraka" onBack={() => setView('home')} onSuccess={handleEditSuccess} />}
+                        {view?.name === 'eval-detail' && <PaskibEvalDetail data={view.data} user={user} onBack={() => setView('eval-list')} onPhotoClick={openPhoto} />}
+                        {view?.name === 'star-history' && <StarHistoryList data={view.data} onBack={() => setView('home')} />}
+                        {view === 'training-feedback' && <TrainingFeedbackForm user={user} role="paskibraka" onBack={() => setView('home')} />}
+                        {view === 'penugasan' && <TugasPaskibrakaView user={user} onBack={() => setView('home')} />}
+                    </div>
+                    <MediaModal src={lightboxData?.src} badgeText={lightboxData?.badgeText} badgeClass={lightboxData?.badgeClass} onClose={() => setLightboxData(null)} />
+                </div>
+            );
+        }
+
+        // --- DASHBOARD COMPONENTS ---
+        function PaskibDashboard({ user, onLogout, onViewEvals, onEditProfile, onRefresh, loading, onPhotoClick, onShowStarHistory, onTrainingFeedback, onViewPenugasan, onViewMateri }) {
+            const emblemClass = getBadgeClass(user.penugasan);
+            const [bioEnabled, setBioEnabled] = useState(localStorage.getItem('paskib_bio_enabled') === 'true');
+            const [pendingTugas, setPendingTugas] = useState(0);
+
+            useEffect(() => {
+                api.run('getTugas', user.nik).then(res => {
+                    if (res) {
+                        // Menghitung tugas yang "Belum Mengerjakan" atau "Parsial"
+                        const pending = res.filter(t => t.status_paskib === 'Belum Mengerjakan' || t.status_paskib.startsWith('Parsial')).length;
+                        setPendingTugas(pending);
+                    }
+                });
+            }, []);
+            const toggleBiometric = () => {
+                const newState = !bioEnabled;
+                setBioEnabled(newState);
+                localStorage.setItem('paskib_bio_enabled', newState);
+
+                if (newState) {
+                    localStorage.setItem('bio_creds', JSON.stringify({ user: user.nik, pass: user.password, role: 'paskibraka' }));
+                    alert("Login Cepat (Biometrik UI) berhasil diaktifkan!");
+                } else {
+                    localStorage.removeItem('bio_creds');
+                    alert("Login Cepat dinonaktifkan.");
+                }
+            };
+
+            return (
+                <div className="os-window p-5 rounded-[2rem] h-[85vh] animate-in flex flex-col relative">
+                    {/* TOMBOL LOGOUT (TAMBAHKAN DI BAGIAN ATAS DASHBOARD UTAMA) */}
+                    <div className="flex justify-end mb-4">
+                        <button
+                            onClick={onLogout}
+                            className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded-xl text-xs font-black tracking-wider flex items-center gap-2 transition"
+                        >
+                            <i className="fas fa-sign-out-alt"></i> LOGOUT AKUN
+                        </button>
+                    </div>
+                    <div className="flex-none mb-4 flex justify-between items-center border-b border-white/10 pb-4">
+                        <h2 className="text-lg font-black text-white">DASHBOARD</h2>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white badge-base ${emblemClass}`}>{user.penugasan}</div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 p-1">
+                        <div className="bg-black/40 border border-white/10 rounded-[2rem] p-6 text-center relative overflow-hidden group">
+                            <div className="relative inline-block mt-2 mb-4 cursor-pointer" onClick={() => onPhotoClick(user.foto, user.penugasan, emblemClass)}>
+                                <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37] to-[#FFD700] rounded-full blur-md opacity-40 group-hover:opacity-60 transition duration-500"></div>
+                                <img src={user.foto} className="w-28 h-28 rounded-full border-2 border-[#FFD700] object-cover relative z-10 shadow-[0_0_20px_rgba(255,215,0,0.3)] group-hover:scale-105 transition duration-300" />
+                            </div>
+                            <h2 className="text-xl font-black text-white tracking-tight drop-shadow-md">{user.nama}</h2>
+                            <p className="text-[#FFD700] text-sm font-bold tracking-wide mb-1 drop-shadow-sm">{user.lapangan}</p>
+                            <div className="flex justify-center gap-2 mt-4">
+                                <button onClick={onEditProfile} className="px-4 py-1.5 rounded-full border border-white/20 text-[10px] font-bold hover:bg-white/10 transition">EDIT PROFIL</button>
+                                <button onClick={onRefresh} className="px-3 py-1.5 rounded-full border border-blue-500/30 text-[10px] font-bold hover:bg-blue-500/20 text-blue-400 transition flex items-center gap-1">{loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync"></i>} SYNC</button>
+                            </div>
+                        </div>
+
+                        {/* TOTAL BINTANG CARD */}
+                        <div onClick={() => !loading && onShowStarHistory(user.nik)} className="bg-gradient-to-r from-black/60 to-[#FFD700]/10 border border-[#FFD700]/30 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_15px_rgba(212,175,55,0.1)] cursor-pointer hover:border-[#FFD700] transition group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-black shadow-[0_0_10px_#FFD700] group-hover:scale-110 transition">
+                                    <i className="fas fa-star text-lg"></i>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold group-hover:text-white">TOTAL BINTANG</div>
+                                    <div className="text-xs text-slate-500 group-hover:text-slate-300">Klik untuk riwayat</div>
+                                </div>
+                            </div>
+                            <div className="text-3xl font-black text-white drop-shadow-[0_0_5px_rgba(255,215,0,0.8)]">
+                                {loading ? <i className="fas fa-spinner fa-spin text-2xl"></i> : (user.totalStars || 0)}
+                            </div>
+                        </div>
+
+                        <FullProfileCard user={user} type="paskibraka" />
+
+                        {/* PANEL BIOMETRIK */}
+                        <div className="bg-black/40 border border-white/10 rounded-2xl p-4 flex justify-between items-center mt-3 shadow-lg">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${bioEnabled ? 'bg-green-500/20 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)]' : 'bg-white/10 text-slate-400'}`}>
+                                    <i className="fas fa-fingerprint text-xl"></i>
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-white uppercase">Login Biometrik</div>
+                                    <div className="text-[9px] text-slate-400">Sidik Jari / Face ID</div>
+                                </div>
+                            </div>
+                            <button onClick={toggleBiometric} className={`px-4 py-2 rounded-lg text-[10px] font-bold transition ${bioEnabled ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'}`}>
+                                {bioEnabled ? 'MATIKAN' : 'AKTIFKAN'}
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 pb-4">
+                            <button onClick={onViewEvals} className="w-full btn-gold py-4 rounded-2xl flex items-center justify-between px-6 shadow-lg shadow-yellow-900/20 hover:translate-y-[-2px] transition-transform"><span className="font-black tracking-widest text-sm">LIHAT EVALUASI</span><i className="fas fa-chevron-right"></i></button>
+                            <button onClick={onTrainingFeedback} className="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-500 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg border border-blue-400/30"><i className="fas fa-bullhorn text-white"></i><span className="font-black text-white text-xs tracking-widest">EVALUASI PELATIHAN</span></button>
+                            <button onClick={onViewMateri} className="w-full mt-3 bg-gradient-to-r from-teal-600 to-emerald-600 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg border border-teal-400/30 transition hover:scale-[1.02]">
+                                <i className="fas fa-book text-white"></i>
+                                <span className="font-black text-white text-xs tracking-widest uppercase">LIHAT RUANG MATERI</span>
+                            </button>
+                            <button onClick={onViewPenugasan} className="w-full mt-3 bg-gradient-to-r from-purple-600 to-indigo-600 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg border border-purple-400/30 transition hover:scale-[1.02] relative">
+                                <i className="fas fa-tasks text-white"></i>
+                                <span className="font-black text-white text-xs tracking-widest">KUMPULKAN PENUGASAN</span>
+                                {pendingTugas > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse border-2 border-black">{pendingTugas}</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PaskibEvalList({ user, onBack, onSelectDate }) {
+            const [evals, setEvals] = useState(null);
+            const [search, setSearch] = useState('');
+
+            const loadData = () => { setEvals(null); api.run('getEvaluasiByDate', user.nik).then(setEvals); };
+            useEffect(() => { loadData(); }, []);
+
+            const filteredKeys = evals ? Object.keys(evals).filter(k => {
+                const q = search.toLowerCase(); const item = evals[k];
+                if (item.display.toLowerCase().includes(q)) return true;
+                return item.list.some(d => d.pelatih.toLowerCase().includes(q) || d.waktu.toLowerCase().includes(q) || d.koreksiTehnik.toLowerCase().includes(q));
+            }) : [];
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[80vh] flex flex-col overflow-hidden relative">
+                    <div className="p-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <div className="flex items-center justify-between mb-4">
+                            <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20"><i className="fas fa-arrow-left text-xs"></i></button>
+                            <h3 className="font-black text-gold-gradient tracking-wide">RIWAYAT EVALUASI</h3>
+                            <button onClick={loadData} className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 hover:bg-blue-500/20"><i className="fas fa-sync"></i></button>
+                        </div>
+                        <div className="relative">
+                            <input placeholder="Cari pelatih, tanggal, jam, atau isi..." className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#FFD700] outline-none" value={search} onChange={e => setSearch(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        {!evals ? <div className="text-center py-10"><div className="loader mx-auto"></div></div> : filteredKeys.length === 0 ? <div className="text-center text-slate-500 py-10 font-medium">Data tidak ditemukan.</div> : <div className="space-y-3">{filteredKeys.map(dateKey => (<div key={dateKey} onClick={() => onSelectDate(evals[dateKey])} className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-blue-500/20 hover:border-blue-400/50 cursor-pointer transition-all group hover:scale-[1.02] duration-200"><div className="flex justify-between items-center"><div><div className="font-bold text-white text-sm">{evals[dateKey].display}</div><div className="text-[10px] text-slate-400 mt-1 font-medium">{evals[dateKey].list.length} Catatan Masuk</div></div><i className="fas fa-chevron-right text-slate-600 group-hover:text-[#FFD700]"></i></div></div>))}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function PaskibEvalDetail({ data, user, onBack, isAdmin, onPhotoClick }) {
+            const [replies, setReplies] = useState({});
+            const [input, setInput] = useState({});
+            const [search, setSearch] = useState('');
+
+            useEffect(() => {
+                data.list.forEach(item => { api.run('getReplies', item.id).then(res => setReplies(prev => ({ ...prev, [item.id]: res }))); });
+            }, [data]);
+
+            const handleSendReply = (evalId) => {
+                const text = input[evalId];
+                if (!text) return;
+
+                // 1. Kosongkan kotak input seketika (Instan)
+                setInput(prev => ({ ...prev, [evalId]: '' }));
+
+                // 2. Buat data balasan sementara
+                const newReply = {
+                    id: "temp-" + Date.now(),
+                    text: text,
+                    waktu: new Date().toLocaleString('id-ID')
+                };
+
+                // 3. Tampilkan balasan ke layar seketika (Optimistic Update)
+                setReplies(prev => ({
+                    ...prev,
+                    [evalId]: [...(prev[evalId] || []), newReply]
+                }));
+
+                // 4. Kirim data ke server (Google Sheets) secara diam-diam di background
+                api.run('submitReply', evalId, user.username, text).catch(err => {
+                    console.error("Gagal mengirim balasan ke server:", err);
+                });
+            };
+
+            const filteredList = data.list.filter(item => {
+                const q = search.toLowerCase();
+                return item.pelatih.toLowerCase().includes(q) || item.koreksiTehnik.toLowerCase().includes(q) || item.koreksiSikap.toLowerCase().includes(q) || (item.teguran && item.teguran.toLowerCase().includes(q));
+            });
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="flex items-center gap-4 p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none">
+                        <button onClick={onBack} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/20 hover:border-white/30 text-white transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                            <i className="fas fa-arrow-left text-sm"></i>
+                        </button>
+                        <div className="flex-1">
+                            <h3 className="font-black text-white text-base tracking-wide drop-shadow-md">{data.display}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] shadow-[0_0_5px_#FFD700]"></span>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">DETAIL KOREKSIAN</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20">
+                        <div className="mb-6 relative">
+                            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                            <input placeholder="Cari pelatih, materi, atau teguran..." className="w-full pl-10 pr-4 py-3.5 bg-black/40 border border-white/10 rounded-2xl text-sm text-white focus:border-[#FFD700]/50 outline-none transition shadow-inner font-medium placeholder-slate-600" value={search} onChange={e => setSearch(e.target.value)} />
+                        </div>
+                        <div className="space-y-6 pb-10">
+                            {filteredList.length === 0 ? (
+                                <div className="text-center text-slate-500 py-12 flex flex-col items-center justify-center opacity-60">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/5"><i className="far fa-folder-open text-2xl"></i></div>
+                                    <span className="text-xs font-bold tracking-wider">TIDAK ADA DATA</span>
+                                </div>
+                            ) : (
+                                filteredList.map((item, idx) => (
+                                    <div key={idx} className="bg-[#0f1423]/60 border border-white/10 rounded-2xl relative overflow-hidden shadow-lg group hover:border-white/20 transition-all duration-300">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D4AF37] to-[#b45309] z-20 shadow-[0_0_10px_rgba(212,175,55,0.3)]"></div>
+                                        <div className="flex items-center gap-3 p-4 bg-white/5 border-b border-white/5">
+                                            <div className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => onPhotoClick(item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih', item.jabatan, 'badge-gold')}>
+                                                <img src={item.fotoPelatih || 'https://via.placeholder.com/150?text=Pelatih'} onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150?text=No+Img'; }} className="w-11 h-11 rounded-full border-2 border-[#FFD700]/50 object-cover shadow-md" />
+                                                <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-black text-[6px] font-black text-white badge-gold border border-[#FFD700] uppercase tracking-wider">{item.jabatan || 'Pelatih'}</div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-white font-bold text-sm truncate">
+                                                    {item.lapanganPelatih ? `(${item.lapanganPelatih}) ${item.pelatih}`.toUpperCase() : item.pelatih.toUpperCase()}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold truncate">{item.jabatan}</div>
+                                            </div>
+                                            <div className="text-[10px] bg-black/60 border border-white/10 px-2.5 py-1 rounded-lg text-[#FFD700] font-bold shadow-inner tracking-wide"><i className="far fa-clock mr-1"></i>{item.waktu}</div>
+                                        </div>
+                                        <div className="p-5 space-y-3.5 text-sm text-slate-300 font-medium">
+                                            <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-0.5 h-full bg-blue-500/50"></div>
+                                                <div className="text-[10px] text-blue-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-running"></i> TEHNIK</div>
+                                                <div className="leading-relaxed">{item.koreksiTehnik}</div>
+                                            </div>
+                                            <div className="p-3.5 bg-black/30 rounded-xl border border-white/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-0.5 h-full bg-green-500/50"></div>
+                                                <div className="text-[10px] text-green-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-user-check"></i> SIKAP</div>
+                                                <div className="leading-relaxed">{item.koreksiSikap}</div>
+                                            </div>
+                                            {(item.teguran && item.teguran !== '-') && (<div className="p-3.5 bg-red-900/10 rounded-xl border border-red-500/20 relative overflow-hidden"><div className="absolute top-0 left-0 w-0.5 h-full bg-red-500/50"></div><div className="text-[10px] text-red-400 font-black mb-1.5 uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-exclamation-triangle"></i> TEGURAN</div><div className="leading-relaxed text-red-200/80">{item.teguran}</div></div>)}
+
+                                            {(item.stars > 0 || (item.prestasi && item.prestasi !== '-')) && (
+                                                <div className="p-3.5 bg-cyan-900/10 rounded-xl border border-cyan-500/20 relative overflow-hidden">
+                                                    <div className="absolute top-0 left-0 w-0.5 h-full bg-cyan-500/50"></div>
+                                                    <div className="flex justify-between items-center mb-1.5">
+                                                        <div className="text-[10px] text-cyan-400 font-black uppercase tracking-widest flex items-center gap-1.5"><i className="fas fa-trophy"></i> PRESTASI</div>
+                                                        {item.stars > 0 && <StarRating count={item.stars} />}
+                                                    </div>
+                                                    {(item.prestasi && item.prestasi !== '-') && <div className="leading-relaxed text-cyan-200/80">{item.prestasi}</div>}
+                                                </div>
+                                            )}
+
+                                            {(item.media || item.mediaData) && (
+                                                <div className="mt-4 w-full border-t border-white/10 pt-4">
+                                                    <div className="text-[10px] text-slate-400 font-bold mb-2 uppercase tracking-widest">LAMPIRAN EVALUASI:</div>
+
+                                                    {item.mediaMime ? (
+                                                        /* PRA-UPLOAD: File belum masuk server */
+                                                        item.mediaMime.includes('video') ? (
+                                                            <video controls src={`data:${item.mediaMime};base64,${item.mediaData}`} className="w-full rounded-lg max-h-60 bg-black border border-white/10"></video>
+                                                        ) : (
+                                                            <img src={`data:${item.mediaMime};base64,${item.mediaData}`} className="w-full rounded-lg max-h-60 object-contain border border-white/10" />
+                                                        )
+                                                    ) : String(item.media).includes("drive.google.com") ? (
+                                                        /* POST-UPLOAD: IFRAME UNIVERSAL & PERISAI TRANSPARAN */
+                                                        <div className="relative w-full h-64 md:h-[400px] rounded-lg overflow-hidden border border-white/10 bg-white shadow-inner">
+                                                            <iframe
+                                                                src={String(item.media).replace("/view?usp=drivesdk", "/preview?rm=minimal").replace("/view", "/preview?rm=minimal")}
+                                                                className="w-full h-full border-0"
+                                                                allow="autoplay">
+                                                            </iframe>
+                                                            {/* Invisible Shield untuk mencegah user lari ke Drive asli */}
+                                                            <div className="absolute top-0 left-0 w-full h-[60px] bg-transparent z-50 cursor-not-allowed" onContextMenu={(e) => e.preventDefault()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}></div>
+
+                                                            {/* Tombol Unduh Opsional */}
+                                                            <button onClick={(e) => {
+                                                                const urlSource = item.mediaData || item.media;
+                                                                const fileIdMatch = String(urlSource).match(/[-\w]{25,}/);
+                                                                const fileId = fileIdMatch ? fileIdMatch[0] : urlSource;
+                                                                window.open(`https://drive.google.com/uc?export=download&id=${fileId}`, '_blank');
+                                                            }} className="absolute bottom-3 right-3 px-3 py-1.5 bg-blue-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-blue-600 backdrop-blur-sm transition z-20">
+                                                                <i className="fas fa-download mr-1"></i> UNDUH ASLI
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                                                            <span className="text-slate-400 text-xs italic">Media tidak dikenali.</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="bg-black/20 p-4 border-t border-white/5">
+                                            <div className="flex items-center gap-2 mb-3"><i className="fas fa-comments text-slate-500 text-xs"></i><div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">BALASAN</div></div>
+                                            <div className="space-y-2 mb-4">{replies[item.id] && replies[item.id].length > 0 ? replies[item.id].map((r, i) => (<div key={i} className="text-xs bg-[#FFD700]/10 text-[#FFD700] p-3 rounded-xl rounded-tr-none border border-[#FFD700]/20 font-medium ml-4 relative">{r.text}</div>)) : <div className="text-[10px] text-slate-600 italic pl-1">Belum ada balasan</div>}</div>
+                                            {!isAdmin && (<div className="flex gap-2"><input disabled={input.sending} type="text" placeholder="Tulis balasan..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium text-white focus:border-[#FFD700]/30 outline-none disabled:opacity-50" value={input[item.id] || ''} onChange={e => setInput({ ...input, [item.id]: e.target.value })} /><button disabled={input.sending} onClick={() => handleSendReply(item.id)} className="bg-gradient-to-r from-[#D4AF37] to-[#b45309] text-black w-9 h-9 rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg disabled:opacity-50 disabled:scale-100"><i className="fas fa-paper-plane text-xs"></i></button></div>)}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function StarHistoryList({ data, onBack }) {
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-5 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none flex items-center justify-between">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/20">
+                            <i className="fas fa-arrow-left text-xs text-white"></i>
+                        </button>
+                        <h3 className="font-black text-gold-gradient tracking-wide text-sm">RIWAYAT BINTANG</h3>
+                        <div className="w-8"></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-black/20 space-y-4">
+                        {data.length === 0 ? (
+                            <div className="text-center text-slate-500 py-10 text-xs">Belum ada riwayat bintang.</div>
+                        ) : (
+                            data.map((item, idx) => {
+                                const isNegative = item.stars < 0;
+                                const borderColor = isNegative ? 'border-red-500/30' : 'border-[#FFD700]/30';
+                                const bgColor = isNegative ? 'bg-red-900/10' : 'bg-[#0f1423]/60';
+                                const starColor = isNegative ? 'text-red-500' : 'text-[#FFD700]';
+
+                                return (
+                                    <div key={idx} className={`${bgColor} border ${borderColor} rounded-xl p-4 relative overflow-hidden group`}>
+                                        <div className="absolute top-0 right-0 p-2 opacity-10"><i className={`fas fa-star text-4xl ${starColor}`}></i></div>
+                                        <div className="flex justify-between items-start mb-2 relative z-10">
+                                            <div>
+                                                <div className="font-bold text-white text-sm">
+                                                    {item.lapanganPelatih ? `(${item.lapanganPelatih}) ${item.pelatih}`.toUpperCase() : item.pelatih.toUpperCase()}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{item.jabatan}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <StarRating count={item.stars} />
+                                                <div className={`text-[9px] mt-1 font-bold ${starColor}`}>{item.tanggal}</div>
+                                            </div>
+                                        </div>
+                                        <div className="relative z-10 p-3 bg-black/40 rounded-lg border border-white/5 mt-2">
+                                            <div className="text-[10px] text-slate-500 font-bold mb-1 uppercase tracking-wide">
+                                                {isNegative ? 'ALASAN PENGURANGAN' : 'KETERANGAN'}
+                                            </div>
+                                            <div className="text-xs text-white italic">"{item.keterangan}"</div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function EditProfile({ user, role, onBack, onSuccess }) {
+            const [form, setForm] = useState({
+                newId: role === 'paskibraka' ? user.nik : user.username,
+                nama: user.nama,
+                lapangan: user.lapangan,
+                jenisKelamin: user.jenisKelamin || '',
+                telegramId: user.telegramId || '',
+                password: ''
+            });
+
+            // State untuk Cropper Gambar
+            const [imageSrc, setImageSrc] = useState(null);
+            const [cropModalOpen, setCropModalOpen] = useState(false);
+            const [croppedData, setCroppedData] = useState(null); // Menyimpan base64 hasil crop
+            const cropperRef = React.useRef(null);
+            const imageRef = React.useRef(null);
+
+            const [loading, setLoading] = useState(false);
+
+            // Saat file dipilih, baca sebagai URL dan buka modal crop
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        setImageSrc(reader.result);
+                        setCropModalOpen(true);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Inisialisasi Cropper.js saat gambar di modal dimuat
+            const onImageLoad = () => {
+                if (cropperRef.current) cropperRef.current.destroy(); // Hapus instance lama
+                cropperRef.current = new window.Cropper(imageRef.current, {
+                    aspectRatio: 1, // Memaksa rasio kotak/lingkaran (1:1) seperti WA
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    background: false,
+                });
+            };
+
+            // Saat tombol "Terapkan Foto" di klik
+            const handleCropSave = () => {
+                if (cropperRef.current) {
+                    const canvas = cropperRef.current.getCroppedCanvas({
+                        width: 400,
+                        height: 400,
+                        imageSmoothingQuality: 'high',
+                    });
+                    // Ambil base64 tanpa prefix data:image/jpeg;base64,
+                    const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+                    setCroppedData({ base64: base64Image, mime: 'image/jpeg', preview: canvas.toDataURL('image/jpeg') });
+                    setCropModalOpen(false);
+                }
+            };
+
+            const handleSave = () => {
+                // TAMBAHAN: Deteksi perubahan form.jenisKelamin melawan data asli user.jenisKelamin (atau kosong jika belum ada)
+                const hasChanges =
+                    form.newId !== (role === 'paskibraka' ? user.nik : user.username) ||
+                    form.nama !== user.nama ||
+                    form.lapangan !== user.lapangan ||
+                    (role === 'paskibraka' && form.jenisKelamin !== (user.jenisKelamin || '')) ||
+                    form.telegramId !== (user.telegramId || '') ||
+                    form.password !== '' ||
+                    croppedData !== null;
+
+                if (!hasChanges) return alert("Tidak ada perubahan data.");
+
+                setLoading(true);
+
+                let payload = {
+                    newId: form.newId,
+                    nama: form.nama,
+                    lapangan: form.lapangan,
+                    telegramId: form.telegramId
+                };
+                if (role === 'paskibraka') payload.jenisKelamin = form.jenisKelamin;
+
+                if (form.password) payload.password = form.password;
+                if (croppedData) {
+                    payload.fotoData = croppedData.base64;
+                    payload.fotoMime = croppedData.mime;
+                }
+
+                const id = role === 'paskibraka' ? user.nik : user.username;
+
+                api.run('updateProfile', role, id, payload).then(res => {
+                    setLoading(false);
+                    alert(res.message);
+                    if (res.status === 'success') {
+                        currentUserData.data.telegramId = form.telegramId; // <--- AGAR STATE UPDATE
+                        // Perbarui LocalStorage agar sesi tidak putus karena ID berubah
+                        const currentUserData = JSON.parse(localStorage.getItem('currentUser'));
+                        currentUserData.data.nama = form.nama;
+                        currentUserData.data.lapangan = form.lapangan;
+                        if (role === 'paskibraka') {
+                            currentUserData.data.nik = form.newId;
+                            currentUserData.data.jenisKelamin = form.jenisKelamin; // <--- TAMBAHAN INI
+                        }
+
+                        else currentUserData.data.username = form.newId;
+                        if (form.password) currentUserData.data.password = form.password;
+                        if (croppedData) currentUserData.data.foto = croppedData.preview;
+
+                        localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+
+                        onSuccess(form.password);
+                    }
+                }).catch(err => {
+                    setLoading(false);
+                    alert("Error: " + err);
+                });
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+
+                    {/* MODAL CROP GAMBAR */}
+                    {cropModalOpen && (
+                        <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
+                            <div className="p-4 flex justify-between items-center bg-black/80 text-white z-10 border-b border-white/10">
+                                <button onClick={() => setCropModalOpen(false)} className="text-slate-400 hover:text-white"><i className="fas fa-times text-xl"></i></button>
+                                <h3 className="font-bold text-sm">Sesuaikan Foto</h3>
+                                <button onClick={handleCropSave} className="text-[#FFD700] font-bold text-sm">SELESAI</button>
+                            </div>
+                            <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
+                                {/* Cropper membungkus gambar ini */}
+                                <div style={{ width: '100%', height: '100%', maxHeight: '60vh' }}>
+                                    <img ref={imageRef} src={imageSrc} onLoad={onImageLoad} style={{ maxWidth: '100%', display: 'block' }} />
+                                </div>
+                            </div>
+                            <div className="p-6 text-center bg-black/80 text-[10px] text-slate-400 pb-10">
+                                Geser dan cubit layar untuk menyesuaikan foto profil Anda agar pas berada di tengah.
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none text-center">
+                        <h3 className="font-black text-white uppercase tracking-tight">EDIT PROFIL & DATA DIRI</h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                        {/* PREVIEW FOTO PROFIL */}
+                        <div className="flex flex-col items-center mb-6">
+                            <div className="relative group w-24 h-24 rounded-full border-2 border-[#FFD700] overflow-hidden mb-2">
+                                <img src={croppedData ? croppedData.preview : user.foto} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition pointer-events-none">
+                                    <i className="fas fa-camera text-white text-xl"></i>
+                                </div>
+                                {/* Input file ditumpuk tak terlihat di atas foto */}
+                                <input disabled={loading} type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} />
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-bold">Ketuk foto untuk ganti</span>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] text-slate-400 mb-1 block font-bold">{role === 'paskibraka' ? 'NIK' : 'Username'} (ID Login)</label>
+                            <input disabled={loading} value={form.newId} className="w-full p-3 os-input rounded-xl text-sm font-medium" onChange={e => setForm({ ...form, newId: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-slate-400 mb-1 block font-bold">Nama Lengkap</label>
+                            <input disabled={loading} value={form.nama} className="w-full p-3 os-input rounded-xl text-sm font-medium" onChange={e => setForm({ ...form, nama: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-slate-400 mb-1 block font-bold">Nama Lapangan</label>
+                            <input disabled={loading} value={form.lapangan} className="w-full p-3 os-input rounded-xl text-sm font-medium" onChange={e => setForm({ ...form, lapangan: e.target.value })} />
+                        </div>
+
+                        {role === 'paskibraka' && (
+                            <div>
+                                <label className="text-[10px] text-slate-400 mb-1 block font-bold">Jenis Kelamin</label>
+                                <select disabled={loading} value={form.jenisKelamin} className="w-full p-3 os-select rounded-xl text-sm font-medium" onChange={e => setForm({ ...form, jenisKelamin: e.target.value })}>
+                                    <option value="" disabled>Pilih Jenis Kelamin</option>
+                                    <option value="Putra" className="text-black">Putra</option>
+                                    <option value="Putri" className="text-black">Putri</option>
+                                </select>
+                            </div>
+                        )}
+                        {/* FITUR PENGHUBUNG TELEGRAM (SEMPURNA) */}
+                        <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl shadow-inner mb-4">
+                            <label className="text-[10px] text-blue-400 mb-2 block font-black uppercase tracking-widest flex items-center gap-2">
+                                <i className="fab fa-telegram-plane text-base"></i> Hubungkan Notifikasi Telegram
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    disabled={loading}
+                                    value={form.telegramId}
+                                    placeholder="Contoh: 123456789"
+                                    className="flex-1 p-3 bg-black/40 border border-blue-500/20 rounded-xl text-sm font-medium text-white focus:border-blue-500"
+                                    onChange={e => setForm({ ...form, telegramId: e.target.value })}
+                                />
+                                <a
+                                    href="https://t.me/userinfobot"
+                                    target="_blank"
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl flex flex-col items-center justify-center transition shadow-lg w-20 flex-shrink-0"
+                                    title="Cari ID Anda"
+                                >
+                                    <i className="fas fa-search text-xs mb-1"></i>
+                                    <span className="text-[8px] font-black uppercase">Cari ID</span>
+                                </a>
+                            </div>
+                            <p className="text-[9px] text-slate-400 mt-2 leading-relaxed">
+                                Agar HP Anda berbunyi saat ada tugas/evaluasi, klik tombol <b>CARI ID</b>, buka bot Telegram, klik <b>Start</b>, lalu salin angka ID Anda ke kotak ini.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-slate-400 mb-1 block font-bold">Ubah Password (Kosongkan jika tetap)</label>
+                            <input disabled={loading} placeholder="Ketik sandi baru..." type="password" value={form.password} className="w-full p-3 os-input rounded-xl text-sm font-medium border border-red-500/30 focus:border-red-500" onChange={e => setForm({ ...form, password: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 z-10 flex-none flex gap-3">
+                        <button disabled={loading} onClick={onBack} className="flex-1 py-3 text-xs font-bold text-slate-400 hover:text-white">BATAL</button>
+                        <button onClick={handleSave} disabled={loading} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold flex justify-center items-center gap-2">
+                            {loading ? <i className="fas fa-spinner fa-spin"></i> : "SIMPAN PERUBAHAN"}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- KOMPONEN PENUGASAN KHUSUS PASKIBRAKA ---
+        function TugasPaskibrakaView({ user, onBack }) {
+            const [tugas, setTugas] = React.useState([]);
+            const [view, setView] = React.useState('bulan');
+            const [editingKolomId, setEditingKolomId] = React.useState(null);
+            const [selectedBulan, setSelectedBulan] = React.useState('');
+            const [selectedTugas, setSelectedTugas] = React.useState(null);
+            const [pengumpulan, setPengumpulan] = React.useState([]);
+            const [files, setFiles] = React.useState({});
+            const [komentar, setKomentar] = React.useState('');
+            const [activeKomentarId, setActiveKomentarId] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+
+            // State Progress Bar
+            const [uploadProgress, setUploadProgress] = React.useState(0);
+            const [isUploading, setIsUploading] = React.useState(false);
+            const [uploadingKolomId, setUploadingKolomId] = React.useState(null);
+
+            // Pencarian
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [previewTugasLampiran, setPreviewTugasLampiran] = React.useState(null);
+
+            const loadTugas = () => {
+                setLoading(true);
+                api.run('getTugas', user.nik)
+                    .then(res => { setTugas(res || []); setLoading(false); })
+                    .catch(err => { alert("Error: " + err); setLoading(false); });
+            };
+            React.useEffect(() => { loadTugas(); }, []);
+            React.useEffect(() => { setSearchQuery(''); }, [view]);
+
+            const getBulanStr = (dateStr) => {
+                if (!dateStr) return 'TIDAK TERJADWAL';
+                return new Date(dateStr).toLocaleString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase();
+            };
+            const bulans = [...new Set(tugas.map(t => getBulanStr(t.waktu_mulai)))];
+
+            const bukaTugas = (t) => {
+                setSelectedTugas(t); setView('detail'); setLoading(true); setFiles({});
+                api.run('getPengumpulan', t.id)
+                    .then(res => {
+                        const riwayatSaya = (res || []).filter(p => String(p.nik) === String(user.nik));
+                        setPengumpulan(riwayatSaya); setLoading(false);
+                    })
+                    .catch(err => { alert("Error: " + err); setLoading(false); });
+            };
+
+            const submitTugasMedia = (id_kolom) => {
+                const fileToUpload = files[id_kolom];
+                if (!fileToUpload) return alert("Pilih file untuk kolom ini terlebih dahulu!");
+
+                setIsUploading(true);
+                setUploadingKolomId(id_kolom);
+                setUploadProgress(0);
+
+                // 1. Minta URL Upload Resumable langsung ke Server Google Drive
+                api.run('getUploadUrl', {
+                    filename: "KMPL_" + user.nik + "_" + fileToUpload.name,
+                    mimeType: fileToUpload.type,
+                    origin: window.location.origin // <--- PERBAIKAN: Tambahkan baris ini
+                })
+                    .then(res => {
+                        // PERBAIKAN: Ekstrak URL secara aman meskipun Server mengembalikan Object atau String
+                        const uploadUrl = typeof res === 'object' ? (res.uploadUrl || res.data) : res;
+
+                        if (!uploadUrl || typeof uploadUrl !== 'string') {
+                            setIsUploading(false);
+                            setUploadingKolomId(null);
+                            return alert("Gagal mendapatkan link upload yang valid dari server.");
+                        }
+
+                        // 2. Upload file murni secara langsung ke Drive (Bypass Apps Script limit)
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('PUT', uploadUrl, true);
+
+                        // PROGRESS BAR NYATA BERDASARKAN BYTES DIKIRIM
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                setUploadProgress(percentComplete);
+                            }
+                        };
+
+                        xhr.onload = () => {
+                            if (xhr.status === 200 || xhr.status === 201) {
+                                let fileId = "";
+                                try {
+                                    const response = JSON.parse(xhr.responseText);
+                                    fileId = response.id; // Mendapatkan ID File asli dari Google Drive
+                                } catch (e) {
+                                    fileId = "Sukses_Upload"; // Fallback aman jika Google tidak balas JSON
+                                }
+
+                                // 3. Simpan HANYA ID ke Spreadsheet (Sangat Ringan, Cepat, dan Aman)
+                                api.run('submitTugas', {
+                                    id_tugas: selectedTugas.id,
+                                    id_kolom: id_kolom,
+                                    nik: user.nik,
+                                    nama: user.nama,
+                                    mediaData: fileId, // Hanya mengirim ID, BUKAN Base64 Text yang berat
+                                    mediaMime: 'drive_link' // Menandai bahwa ini file di Drive
+                                }).then(submitRes => {
+                                    setIsUploading(false);
+                                    setUploadingKolomId(null);
+                                    setEditingKolomId(null);
+                                    alert(submitRes.message || "Tugas berhasil dikumpulkan!");
+                                    bukaTugas(selectedTugas); // Refresh data
+                                }).catch(err => {
+                                    setIsUploading(false);
+                                    setUploadingKolomId(null);
+                                    alert("Gagal menyimpan data ke database: " + err);
+                                });
+                            } else {
+                                setIsUploading(false);
+                                alert("Gagal upload ke Google Drive. Mungkin jaringan terputus.");
+                            }
+                        };
+
+                        xhr.onerror = () => {
+                            setIsUploading(false);
+                            alert("Terjadi kesalahan jaringan saat proses pengunggahan ke server Google.");
+                        };
+
+                        xhr.send(fileToUpload); // Kirim raw file murni, bukan teks base64
+                    })
+                    .catch(err => {
+                        setIsUploading(false);
+                        setUploadingKolomId(null);
+                        alert("Gagal membuat sesi upload: " + err);
+                    });
+            };
+
+            const handleHapusJawaban = (id_pengumpulan) => {
+                if (confirm("Yakin ingin menghapus file jawaban ini? Anda harus mengumpulkannya kembali.")) {
+                    setLoading(true);
+                    api.run('deletePengumpulan', id_pengumpulan).then(res => {
+                        alert(res.message);
+                        bukaTugas(selectedTugas);
+                    }).catch(err => {
+                        alert("Error: " + err);
+                        setLoading(false);
+                    });
+                }
+            };
+
+            const kirimKomentar = (id_pengumpulan) => {
+                if (!komentar) return; setLoading(true);
+                api.run('addKomentarTugas', { id_pengumpulan: id_pengumpulan, username: user.nama, role: 'Paskibraka', teks: komentar }).then(res => {
+                    setKomentar(''); setActiveKomentarId(null); bukaTugas(selectedTugas);
+                });
+            };
+            const handleDownload = (lampiran) => {
+                if (lampiran.fileBase64) {
+                    const link = document.createElement('a');
+                    link.href = `data:${lampiran.fileMime};base64,${lampiran.fileBase64}`;
+                    link.download = lampiran.nama || 'Lampiran';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (lampiran.url) {
+                    const fileIdMatch = String(lampiran.url).match(/[-\w]{25,}/);
+                    const fileId = fileIdMatch ? fileIdMatch[0] : lampiran.url;
+                    window.open(`https://drive.google.com/uc?export=download&id=${fileId}`, '_blank');
+                }
+            };
+            if (previewTugasLampiran) {
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center mb-4 flex-none">
+                            <button onClick={() => setPreviewTugasLampiran(null)} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 transition"><i className="fas fa-arrow-left"></i></button>
+                            <h3 className="font-black text-sm text-purple-400 tracking-widest truncate ml-3 uppercase">{previewTugasLampiran.nama}</h3>
+                        </div>
+                        <div className="flex-1 w-full bg-black/40 rounded-xl overflow-hidden relative border border-white/10 mb-4 flex items-center justify-center">
+                            {previewTugasLampiran.url ? (
+                                <>
+                                    <iframe src={`https://drive.google.com/file/d/${previewTugasLampiran.url.match(/[-\w]{25,}/) ? previewTugasLampiran.url.match(/[-\w]{25,}/)[0] : previewTugasLampiran.url}/preview?rm=minimal`} className="w-full h-full border-0 bg-white" allow="autoplay" title="Dokumen Lampiran Tugas"></iframe>
+                                    {/* INVISIBLE SHIELD SUPER */}
+                                    <div
+                                        className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed"
+                                        title="Akses Lanjutan Dikunci"
+                                        onContextMenu={(e) => e.preventDefault()}>
+                                    </div>
+                                </>
+                            ) : previewTugasLampiran.fileBase64 ? (
+                                previewTugasLampiran.fileMime.includes('video') ? (
+                                    <video controls src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full rounded-lg max-h-full bg-black"></video>
+                                ) : previewTugasLampiran.fileMime.includes('image') ? (
+                                    <img src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full rounded-lg max-h-full object-contain" />
+                                ) : (
+                                    <iframe src={`data:${previewTugasLampiran.fileMime};base64,${previewTugasLampiran.fileBase64}`} className="w-full h-full border-0 bg-white" title="Dokumen Lokal"></iframe>
+                                )
+                            ) : (
+                                <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                            )}
+                        </div>
+                        <button onClick={() => handleDownload(previewTugasLampiran)} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 py-4 rounded-xl font-black text-white text-sm tracking-widest shadow-lg text-center flex items-center justify-center gap-2 transition hover:scale-[1.02] flex-none">
+                            <i className="fas fa-cloud-download-alt"></i> UNDUH LAMPIRAN INI
+                        </button>
+                    </div>
+                );
+            }
+            if (view === 'detail') return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-2"><button onClick={() => setView('list')} className="w-8 h-8 rounded-full bg-white/5 disabled:opacity-50" disabled={isUploading}><i className="fas fa-arrow-left"></i></button><h3 className="font-bold text-[#FFD700] uppercase text-sm">PENGERJAAN TUGAS</h3></div>
+
+                    <div className="bg-blue-900/20 p-4 rounded-xl border border-blue-500/30 shadow-inner">
+                        <div className="flex justify-between items-start gap-2">
+                            <h4 className="font-black text-white text-sm">{selectedTugas.judul}</h4>
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded whitespace-nowrap ${selectedTugas.status_paskib === 'Belum Mengerjakan' ? 'bg-red-500/20 text-red-400' :
+                                selectedTugas.status_paskib === 'Sudah Mengerjakan Tepat Waktu' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                }`}>{selectedTugas.status_paskib}</span>
+                        </div>
+
+                        {/* PERBAIKAN DESKRIPSI (SCROLL & WHITESPACE) */}
+                        <div className="text-[11px] text-slate-300 mt-2 mb-2 p-3 bg-black/40 rounded-lg border border-white/5 max-h-48 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                            {selectedTugas.deskripsi}
+                        </div>
+
+                        <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-blue-500/20 text-[9px] font-bold text-slate-400">
+                            <div><i className="far fa-calendar-check mr-1 text-green-400"></i>MULAI: {new Date(selectedTugas.waktu_mulai).toLocaleString('id-ID')}</div>
+                            <div><i className="far fa-calendar-times mr-1 text-red-400"></i>BATAS: {new Date(selectedTugas.waktu_selesai).toLocaleString('id-ID')}</div>
+                        </div>
+
+                        {/* LAMPIRAN TUGAS DARI PELATIH/ADMIN */}
+                        {selectedTugas.lampiran && selectedTugas.lampiran.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"><i className="fas fa-paperclip mr-1"></i> Lampiran Dari Pelatih/Admin:</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {selectedTugas.lampiran.map((lam, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-2.5 bg-black/40 rounded-lg border border-white/5 transition text-left">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                <i className={`fas ${lam.tipe === 'File' ? 'fa-file-alt text-orange-400' : 'fa-link text-blue-400'} text-xs flex-shrink-0`}></i>
+                                                <span className="text-xs text-white truncate font-medium">{lam.nama}</span>
+                                            </div>
+                                            <div className="flex gap-1.5 flex-shrink-0">
+                                                <button onClick={() => { if (lam.tipe === 'File') setPreviewTugasLampiran(lam); else window.open(lam.url.startsWith('http') ? lam.url : 'https://' + lam.url, '_blank'); }} className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-[9px] font-bold hover:bg-blue-500/40 transition">PREVIEW</button>
+                                                {lam.tipe === 'File' && <button onClick={() => handleDownload(lam)} className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded text-[9px] font-bold hover:bg-emerald-500/40 transition">UNDUH</button>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {loading && !isUploading ? <div className="loader mx-auto mt-4"></div> : selectedTugas.kolom.map((k, idx) => {
+                        const answer = pengumpulan.find(p => cleanStr(p.id_kolom) === cleanStr(k.id));
+                        const isThisUploading = isUploading && uploadingKolomId === k.id;
+                        const isEditingThisKolom = editingKolomId === k.id; // Deklarasikan status edit
+
+                        return (
+                            <div key={k.id} className="bg-black/40 p-4 rounded-xl border border-white/10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 rounded bg-[#FFD700] text-black font-black flex items-center justify-center text-[10px]">{idx + 1}</div>
+                                    <h4 className="font-bold text-white text-xs uppercase">{k.judul}</h4>
+                                </div>
+
+                                <div className="text-[10px] text-slate-300 mb-4 ml-7 max-h-32 overflow-y-auto custom-scrollbar whitespace-pre-wrap bg-black/20 p-2.5 rounded-lg border-l-2 border-[#FFD700]/50">
+                                    {k.deskripsi || 'Tidak ada instruksi kolom.'}
+                                </div>
+
+                                {/* JIKA BELUM MENGUMPULKAN ATAU SEDANG MENEKAN TOMBOL EDIT JAWABAN */}
+                                {(!answer || isEditingThisKolom) ? (
+                                    <div className="ml-7 bg-red-900/10 p-3 rounded-xl border border-red-500/20 text-center">
+                                        <p className="text-[10px] text-red-400 mb-2 font-bold tracking-widest uppercase">
+                                            {isEditingThisKolom ? 'EDIT JAWABAN' : 'BELUM MENGUMPULKAN'}
+                                        </p>
+                                        <input
+                                            disabled={isUploading}
+                                            type="file"
+                                            className="w-full text-[10px] mb-2 os-input p-2 rounded-lg"
+                                            onChange={e => setFiles({ ...files, [k.id]: e.target.files[0] })}
+                                        />
+
+                                        {isThisUploading && (
+                                            <div className="mb-3 p-3 bg-black/50 rounded-xl border border-white/10 text-left">
+                                                <div className="flex justify-between text-[10px] font-bold text-[#FFD700] mb-2 uppercase tracking-wide">
+                                                    <span className="flex items-center gap-2"><i className="fas fa-cloud-upload-alt animate-bounce"></i> Mengunggah File...</span>
+                                                    <span>{uploadProgress}%</span>
+                                                </div>
+                                                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden shadow-inner">
+                                                    <div className="bg-gradient-to-r from-[#B8860B] to-[#FFD700] h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <button disabled={isUploading} onClick={() => submitTugasMedia(k.id)} className="btn-gold w-full p-2 px-4 rounded-lg text-[10px] font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {isThisUploading ? <><i className="fas fa-spinner fa-spin"></i> MEMPROSES...</> : <><i className="fas fa-upload"></i> UPLOAD MEDIA</>}
+                                        </button>
+
+                                        {/* TOMBOL BATAL JIKA DALAM MODE EDIT */}
+                                        {isEditingThisKolom && (
+                                            <button disabled={isUploading} onClick={() => setEditingKolomId(null)} className="w-full mt-2 py-2 bg-red-500/20 text-red-400 rounded-lg text-[10px] font-bold border border-red-500/30 hover:bg-red-500/40 transition">
+                                                <i className="fas fa-times mr-1"></i> BATAL EDIT
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="ml-7 bg-white/5 p-3 rounded-xl border border-white/10">
+                                        {(() => {
+                                            const lateStatus = getLateStatus(answer.waktu, selectedTugas.waktu_selesai);
+                                            return (
+                                                <div className={`font-bold text-[10px] mb-3 uppercase tracking-widest flex flex-col md:flex-row md:items-center justify-between gap-2 p-2 rounded-lg border ${lateStatus.bg}`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <i className={`fas ${lateStatus.isLate ? 'fa-exclamation-circle' : 'fa-check-circle'} ${lateStatus.color}`}></i>
+                                                        <span className={lateStatus.color}>DIKUMPULKAN: {new Date(answer.waktu).toLocaleString('id-ID')}</span>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded bg-black/40 shadow-inner ${lateStatus.color}`}>{lateStatus.text}</span>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {answer.status_koreksi === "Sudah Dikoreksi" && (
+                                            <div className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded border border-emerald-500/30 mb-2 inline-flex items-center gap-1">
+                                                <i className="fas fa-clipboard-check text-xs"></i> TUGAS INI SUDAH DIKOREKSI & DIREVIEW
+                                            </div>
+                                        )}
+
+                                        {/* KETERANGAN WAKTU EDIT */}
+                                        {answer.waktu_edit && (
+                                            <div className="text-[9px] text-yellow-400 font-bold italic mb-2">
+                                                * Telah di edit pada {new Date(answer.waktu_edit).toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                            </div>
+                                        )}
+
+                                        {answer.mediaData ? (
+                                            <div id={`media-container-${k.id}`} className="w-full h-80 md:h-[400px] rounded-lg overflow-hidden border border-white/10 mb-2 relative bg-black/50 flex items-center justify-center group">
+                                                {/* Tombol Play & Full Screen Dipertahankan */}
+                                                <div className="absolute top-3 right-3 flex gap-2 z-[70] opacity-90 hover:opacity-100 transition-opacity">
+                                                    {answer.mediaMime && answer.mediaMime.includes('video') && (
+                                                        <button onClick={() => {
+                                                            const media = document.getElementById(`media-${k.id}`);
+                                                            if (media) { media.paused ? media.play() : media.pause(); }
+                                                        }} className="px-3 py-1.5 bg-green-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-green-600 backdrop-blur-sm transition flex items-center">
+                                                            <i className="fas fa-play mr-1"></i> PLAY / PAUSE
+                                                        </button>
+                                                    )}
+                                                    <button onClick={(e) => {
+                                                        const container = document.getElementById(`media-container-${k.id}`);
+                                                        const videoElem = document.getElementById(`media-${k.id}`);
+                                                        const btn = e.currentTarget;
+                                                        const isNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+                                                        if (container) {
+                                                            const isFauxFullscreen = container.classList.contains('ios-fullscreen');
+
+                                                            if (!isNativeFullscreen && !isFauxFullscreen) {
+                                                                // MASUK FULLSCREEN
+                                                                if (container.requestFullscreen) {
+                                                                    container.requestFullscreen().catch(() => container.classList.add('ios-fullscreen'));
+                                                                } else if (container.webkitRequestFullscreen) {
+                                                                    container.webkitRequestFullscreen();
+                                                                } else if (videoElem && videoElem.webkitEnterFullscreen) {
+                                                                    videoElem.webkitEnterFullscreen();
+                                                                } else {
+                                                                    container.classList.add('ios-fullscreen'); // Bypass iOS / Safari
+                                                                }
+                                                                btn.innerHTML = '<i class="fas fa-compress mr-1"></i> KELUAR FULL SCREEN';
+                                                            } else {
+                                                                // KELUAR FULLSCREEN
+                                                                if (isNativeFullscreen) {
+                                                                    if (document.exitFullscreen) document.exitFullscreen();
+                                                                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                                }
+                                                                if (isFauxFullscreen) {
+                                                                    container.classList.remove('ios-fullscreen');
+                                                                }
+                                                                btn.innerHTML = '<i class="fas fa-expand mr-1"></i> FULL SCREEN';
+                                                            }
+                                                        }
+                                                    }} className="px-3 py-1.5 bg-purple-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-purple-600 backdrop-blur-sm transition flex items-center">
+                                                        <i className="fas fa-expand mr-1"></i> FULL SCREEN
+                                                    </button>
+                                                </div>
+
+                                                {/* Render Iframe/Video/Gambar */}
+                                                {(!answer.mediaMime || (!answer.mediaMime.includes('image') && !answer.mediaMime.includes('video'))) ? (
+                                                    <>
+                                                        <iframe src={`https://drive.google.com/file/d/${String(answer.mediaData).match(/[-\w]{25,}/) ? String(answer.mediaData).match(/[-\w]{25,}/)[0] : answer.mediaData}/preview?rm=minimal`} className="w-full h-full border-0 bg-white" allow="autoplay" title="Dokumen Pratinjau"></iframe>
+                                                        <div className="absolute top-0 left-0 w-full h-[70px] bg-transparent z-50 cursor-not-allowed" onContextMenu={(e) => e.preventDefault()}></div>
+                                                        <a href={`https://drive.google.com/uc?export=download&id=${answer.mediaData}`} target="_blank" rel="noreferrer" className="absolute bottom-3 right-3 px-3 py-1.5 bg-blue-600/90 text-white rounded shadow-lg text-[10px] font-bold hover:bg-blue-600 transition z-[60]"><i className="fas fa-download mr-1"></i> UNDUH ASLI</a>
+                                                    </>
+                                                ) : answer.mediaMime.includes('video') ? (
+                                                    <video id={`media-${k.id}`} controls controlsList="nodownload" src={`data:${answer.mediaMime};base64,${answer.mediaData}`} className="w-full rounded-lg max-h-full bg-black outline-none"></video>
+                                                ) : answer.mediaMime.includes('image') ? (
+                                                    <img id={`media-${k.id}`} src={`data:${answer.mediaMime};base64,${answer.mediaData}`} className="w-full rounded-lg max-h-full object-contain" alt="Bukti Penugasan" />
+                                                ) : (
+                                                    <div className="text-center p-6"><span className="text-white text-sm font-bold">Media Tidak Valid</span></div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-red-900/10 rounded-xl border border-red-500/20 text-center mb-2">
+                                                <i className="fas fa-exclamation-triangle text-xl text-red-400 mb-2"></i>
+                                                <span className="text-white text-xs font-bold block">Media Tidak Ditemukan</span>
+                                            </div>
+                                        )}
+
+                                        {/* MENU TINDAKAN: EDIT DAN HAPUS MUNCUL JIKA BELUM DIKOREKSI */}
+                                        {answer.status_koreksi !== "Sudah Dikoreksi" && (
+                                            <div className="flex gap-2 mt-3 mb-3 border-b border-white/5 pb-3">
+                                                <button onClick={() => setEditingKolomId(k.id)} className="flex-1 py-2 bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-bold border border-blue-500/30 hover:bg-blue-500/40 transition">
+                                                    <i className="fas fa-edit mr-1"></i> EDIT JAWABAN
+                                                </button>
+                                                <button onClick={() => handleHapusJawaban(answer.id_pengumpulan)} className="flex-1 py-2 bg-red-500/20 text-red-400 rounded-lg text-[10px] font-bold border border-red-500/30 hover:bg-red-500/40 transition">
+                                                    <i className="fas fa-trash mr-1"></i> HAPUS JAWABAN
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="bg-black/60 p-2 rounded-lg border border-white/5 mt-2">
+                                            <div className="text-[9px] text-slate-400 mb-1 font-bold">KOLOM KOMENTAR</div>
+                                            <div className="space-y-1 mb-2 max-h-24 overflow-y-auto custom-scrollbar">
+                                                {answer.komentar?.map((kom, i) => (<div key={i} className="text-[10px]"><span className={`font-bold ${kom.role === 'Paskibraka' ? 'text-blue-400' : 'text-[#FFD700]'}`}>{kom.username}:</span> <span className="text-slate-300">{kom.teks}</span></div>))}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <input value={activeKomentarId === answer.id_pengumpulan ? komentar : ''} placeholder="Balas komentar pelatih..." className="flex-1 p-1.5 os-input rounded text-[10px]" onChange={e => { setActiveKomentarId(answer.id_pengumpulan); setKomentar(e.target.value); }} />
+                                                <button onClick={() => kirimKomentar(answer.id_pengumpulan)} className="px-2 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-500"><i className="fas fa-paper-plane"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+
+            if (view === 'list') {
+                const filteredTugas = tugas.filter(t =>
+                    t.judul.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center mb-4"><button onClick={() => setView('bulan')} className="w-8 h-8 rounded-full bg-white/5"><i className="fas fa-arrow-left"></i></button><h3 className="font-black text-sm">TUGAS {selectedBulan}</h3></div>
+
+                        <div className="relative mb-3">
+                            <i className="fas fa-search absolute top-3.5 left-3.5 text-slate-400 text-xs"></i>
+                            <input
+                                type="text"
+                                placeholder="Cari nama/judul tugas disini..."
+                                className="w-full p-2.5 pl-9 os-input rounded-xl text-xs"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+
+                        {filteredTugas.filter(t => getBulanStr(t.waktu_mulai) === selectedBulan).length === 0 ? (
+                            <p className="text-center text-slate-400 text-xs mt-4">Tugas tidak ditemukan.</p>
+                        ) : (
+                            filteredTugas.filter(t => getBulanStr(t.waktu_mulai) === selectedBulan).map(t => (
+                                <div key={t.id} onClick={() => bukaTugas(t)} className="bg-white/5 border border-white/10 p-4 rounded-xl mb-3 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/50 transition">
+                                    <div className="font-bold text-white text-sm">{t.judul}</div>
+
+                                    {/* PERBAIKAN DESKRIPSI (WHITESPACE) */}
+                                    <div className="text-[10px] text-slate-400 mt-1 line-clamp-3 whitespace-pre-wrap">{t.deskripsi}</div>
+
+                                    <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/5 gap-2">
+                                        <div className="text-[9px] text-red-400 font-bold whitespace-nowrap"><i className="far fa-clock mr-1"></i> DEADLINE: {new Date(t.waktu_selesai).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded whitespace-nowrap ${t.status_paskib === 'Belum Mengerjakan' ? 'bg-red-500/20 text-red-400' :
+                                            t.status_paskib === 'Sudah Mengerjakan Tepat Waktu' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                            }`}>{t.status_paskib}</span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                );
+            }
+
+            return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center mb-4"><button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5"><i className="fas fa-arrow-left"></i></button><h3 className="font-black text-sm">PILIH BULAN PENUGASAN</h3></div>
+                    {loading ? <div className="loader mx-auto"></div> : bulans.length === 0 ? <p className="text-center text-slate-400 text-xs py-10">Belum ada tugas yang diberikan ke kamu.</p> : bulans.map(b => (
+                        <button key={b} onClick={() => { setSelectedBulan(b); setView('list'); }} className="w-full p-5 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-xl mb-3 font-black text-blue-300 text-left hover:scale-[1.02] shadow-lg transition flex items-center justify-between">
+                            <span><i className="far fa-calendar-alt mr-3 text-lg"></i> BULAN {b}</span>
+                            <i className="fas fa-chevron-right opacity-50"></i>
+                        </button>
+                    ))}
+                </div>
+            );
+
+
+        }
+
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PaskibApp />);
+
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Mesin PWA Aktif di area: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Mesin PWA Gagal Aktif: ', error);
+                    });
+            });
+        }
+    </script>
+</body>
+
+</html>

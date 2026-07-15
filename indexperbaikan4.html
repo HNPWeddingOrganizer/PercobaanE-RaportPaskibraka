@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - Raport Paskibraka</title>
+    
+    <!-- ========================================== -->
+    <!-- SHARED CSS & LIBRARIES -->
+    <!-- ========================================== -->
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/a/a0/Logo_dppi_512.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+     <script>
+    // 1. Blokir Klik Kanan (Context Menu)
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    
+    // 2. Blokir Shortcut Keyboard (F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+U, dll)
+    document.onkeydown = function(e) {
+        if (
+            e.keyCode === 123 || // F12
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Windows/Linux: Ctrl+Shift+I/C/J
+            (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 67 || e.keyCode === 74)) || // Mac: Cmd+Option+I/C/J
+            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || // Windows: Ctrl+U / Ctrl+S
+            (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))    // Mac: Cmd+U / Cmd+S
+        ) {
+            e.preventDefault();
+            return false;
+        }
+    };
+    
+    // 3. Debugger Trap (Membuat DevTools freeze jika dipaksa buka lewat menu browser)
+    setInterval(() => { 
+        try { (function() { return false; }['constructor']('debugger')()); } catch(e) {} 
+    }, 100);
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        :root { --gold-primary: #D4AF37; --gold-light: #FFD700; --gold-glow: rgba(255, 215, 0, 0.4); --blue-royal: #1e3a8a; --blue-neon: #3b82f6; }
+        body { font-family: 'Outfit', sans-serif; background-color: #050505; color: #f8fafc; margin: 0; min-height: 100vh; overflow-x: hidden; }
+        .ambient-light { position: fixed; border-radius: 50%; filter: blur(80px); z-index: -2; opacity: 0.5; animation: pulse-light 8s infinite alternate ease-in-out; }
+        .light-gold { top: -10%; left: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--gold-primary), transparent 70%); }
+        .light-blue { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, var(--blue-royal), transparent 70%); animation-delay: -4s; }
+        @keyframes pulse-light { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(1.1); opacity: 0.6; } }
+        .os-window { background: rgba(20, 25, 40, 0.6); backdrop-filter: blur(30px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255, 255, 255, 0.3); border-left: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05); transform-style: preserve-3d; transform: translateZ(0); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .os-input, .os-select { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        .os-input:focus, .os-select:focus { border-color: var(--gold-light); box-shadow: 0 0 15px var(--gold-glow), inset 0 2px 5px rgba(0,0,0,0.5); outline: none; background: rgba(0, 0, 0, 0.7); }
+        .os-input:disabled, .os-select:disabled { opacity: 0.5; cursor: not-allowed; background: rgba(0,0,0,0.6); }
+        .btn-gold { background: linear-gradient(135deg, #b45309 0%, #D4AF37 50%, #FFD700 100%); color: #000; font-weight: 800; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255,255,255,0.4); transition: transform 0.1s ease, box-shadow 0.2s ease; }
+        .btn-gold:active { transform: scale(0.98); } .btn-gold:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .btn-green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); transition: transform 0.1s ease; }
+        .btn-green:active { transform: scale(0.98); } .btn-green:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .btn-red { background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%); color: #fff; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3); transition: transform 0.1s ease; }
+        .btn-red:active { transform: scale(0.98); } .btn-red:disabled { opacity: 0.7; cursor: not-allowed; filter: grayscale(0.5); }
+        .text-gold-gradient { background: linear-gradient(to right, #F3E5AB, #FFD700, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5)); }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #FFD700; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-in { animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        /* Biometric Animations */
+        .biometric-scanner-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .bio-icon-container { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .fingerprint-icon { font-size: 60px; color: rgba(255, 215, 0, 0.2); }
+        .fingerprint-active {
+            position: absolute; inset: 0; color: #D4AF37; overflow: hidden;
+            animation: bioScan 1.5s ease-in-out infinite;
+            display: flex; align-items: center; justify-content: center;
+            clip-path: inset(100% 0 0 0);
+        }
+        .fingerprint-active i { font-size: 60px; filter: drop-shadow(0 0 10px #D4AF37); }
+        @keyframes bioScan { 0% { clip-path: inset(100% 0 0 0); } 50% { clip-path: inset(0 0 0 0); } 100% { clip-path: inset(0 0 100% 0); } }
+        .face-id-frame {
+            width: 120px; height: 120px; border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1); position: relative;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        }
+        .face-id-scanner {
+            width: 100%; height: 2px; background: #D4AF37;
+            box-shadow: 0 0 15px #D4AF37; position: absolute; top: 10px;
+            animation: faceScan 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes faceScan { from { top: 10%; opacity: 0.5; } to { top: 90%; opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useEffect } = React;
+        const LOGO_DPPI = "https://upload.wikimedia.org/wikipedia/commons/3/36/Logo_DPPI.png";
+        const LOGO_YOGYA = "https://upload.wikimedia.org/wikipedia/commons/d/db/Logo_Pemkot_Yk.png"; 
+        const LOGO_PASKIB = "https://upload.wikimedia.org/wikipedia/commons/d/dc/Logo_paskibraka.png";
+
+        // =================================================================================
+        // MASUKKAN URL HASIL "NEW DEPLOYMENT" DI SINI:
+        // =================================================================================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyWShwCuygjDQ6BJeNgVCNDV0mrc9j3P9jVQSOl92iXu51GfND4y0pX4DU18eBy_IRX/exec";
+
+        // --- SISTEM DETEKSI ERROR CANGGIH ---
+        const api = {
+            run: async (funcName, payload = {}) => {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        const response = await fetch(GAS_WEB_APP_URL, {
+                            method: "POST", 
+                            redirect: "follow",
+                            headers: { "Content-Type": "text/plain;charset=utf-8" },
+                            body: JSON.stringify({ action: funcName, payload: payload })
+                        });
+
+                        const rawText = await response.text();
+                        let result;
+                        
+                        try {
+                            result = JSON.parse(rawText);
+                        } catch (parseError) {
+                            console.error("Respons dari Server Bukan JSON:", rawText);
+                            // Deteksi jika Google memblokir akses dan mengembalikan halaman login/HTML
+                            if (rawText.toLowerCase().includes("<html") || rawText.includes("accounts.google.com")) {
+                                reject("❌ ERROR HAK AKSES:\n\nGoogle menolak koneksi. Silakan buka file Google Script Anda, lalu Deploy ulang:\n\n1. Klik Deploy -> New Deployment\n2. Execute as: Me\n3. Who has access: ANYONE (Sangat Penting!)\n4. Copy link baru dan masukkan ke dalam file index.html");
+                            } else {
+                                reject("❌ ERROR SERVER SCRIPT:\n\nGoogle Script Anda tidak mengembalikan data JSON. Pastikan Anda sudah menyimpan Kode.gs terbaru.");
+                            }
+                            return;
+                        }
+                        
+                        if (result.status === 'success' || result.status === 'error') {
+                            if(result.status === 'error') reject(result.message);
+                            else resolve(result.data !== undefined ? result.data : result);
+                        } else {
+                            resolve(result);
+                        }
+
+                    } catch (error) {
+                        console.error("API Error Fetch:", error);
+                        reject(`❌ KONEKSI GAGAL (${error.message}):\n\nPastikan URL di atas benar (harus berakhiran /exec) dan perangkat Anda terhubung ke internet.`);
+                    }
+                });
+            }
+        };
+
+        function Background3D() {
+            return (
+                <>
+                    <div className="ambient-light light-gold"></div>
+                    <div className="ambient-light light-blue"></div>
+                </>
+            );
+        }
+
+
+       // --- KOMPONEN RUANG MATERI ---
+        function MateriView({ user, role, onBack }) {
+            const [materi, setMateri] = React.useState([]);
+            const [view, setView] = React.useState('list'); 
+            const [loading, setLoading] = React.useState(false);
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [form, setForm] = React.useState({ judul: '', deskripsi: '', tipe: 'File', linkData: '' });
+            const [file, setFile] = React.useState(null);
+            
+            // [BARU] State untuk menyimpan persentase upload
+            const [uploadProgress, setUploadProgress] = React.useState(0);
+
+            const loadMateri = () => {
+                setLoading(true);
+                api.run('getMateri').then(res => {
+                    setMateri(res || []);
+                    setLoading(false);
+                }).catch(err => {
+                    console.error(err);
+                    setLoading(false);
+                });
+            };
+
+            React.useEffect(() => { loadMateri(); }, []);
+
+            const handleUpload = () => {
+                if (!form.judul || !form.deskripsi) return alert("Judul dan Deskripsi wajib diisi!");
+                if (form.tipe === 'Link' && !form.linkData) return alert("Masukkan URL Link!");
+                if (form.tipe === 'File' && !file) return alert("Pilih file untuk diunggah!");
+
+                setLoading(true);
+                setUploadProgress(0); // Reset progress
+
+                const today = new Date().toISOString().split('T')[0];
+                const payload = {
+                    tanggal: today,
+                    pengunggah: user.nama + ` (${role})`,
+                    judul: form.judul,
+                    deskripsi: form.deskripsi,
+                    tipe: form.tipe,
+                    linkData: form.linkData
+                };
+
+                if (form.tipe === 'File' && file) {
+                    if(file.size > 2000 * 1024 * 1024) { 
+                        setLoading(false);
+                        return alert("Ukuran file maksimal 15MB.");
+                    }
+                    
+                    const reader = new FileReader();
+                    
+                    // [BARU] Melacak progres pembacaan file di HP/Laptop
+                    reader.onprogress = (data) => {
+                        if (data.lengthComputable) {
+                            const progress = parseInt(((data.loaded / data.total) * 30), 10); // 0-30%
+                            setUploadProgress(progress);
+                        }
+                    };
+
+                    reader.onload = (e) => {
+                        setUploadProgress(30);
+                        payload.fileBase64 = e.target.result.split(',')[1];
+                        payload.fileMime = file.type;
+                        
+                        // [BARU] Simulasi progres berjalan saat mengirim ke server (30% - 90%)
+                        let simProgress = 30;
+                        const progressInterval = setInterval(() => {
+                            simProgress += Math.floor(Math.random() * 5) + 2;
+                            if(simProgress > 90) simProgress = 90;
+                            setUploadProgress(simProgress);
+                        }, 500);
+
+                        api.run('addMateri', payload).then(res => {
+                            clearInterval(progressInterval);
+                            setUploadProgress(100); // 100% Selesai
+                            setTimeout(() => {
+                                alert(res.message); 
+                                loadMateri(); 
+                                setView('list');
+                                setUploadProgress(0);
+                            }, 600); // Jeda sejenak agar user melihat 100%
+                        }).catch(err => {
+                            clearInterval(progressInterval);
+                            setLoading(false);
+                            setUploadProgress(0);
+                            alert("Terjadi kesalahan sistem saat mengunggah.");
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    api.run('addMateri', payload).then(res => {
+                        alert(res.message); loadMateri(); setView('list');
+                    });
+                }
+            };
+
+            const handleDelete = (id) => {
+                if(confirm("Yakin ingin menghapus materi ini?")) {
+                    setLoading(true);
+                    api.run('deleteMateri', id).then(res => {
+                        alert(res.message); loadMateri();
+                    });
+                }
+            };
+
+            if (view === 'create') {
+                return (
+                    <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col space-y-4 overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center bg-black/50 p-4 -mx-6 -mt-6 rounded-t-[2rem] mb-2">
+                            <button onClick={() => setView('list')} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20"><i className="fas fa-arrow-left"></i></button>
+                            <h3 className="font-bold tracking-widest text-teal-400">UNGGAH MATERI BARU</h3>
+                        </div>
+                        <input disabled={loading} placeholder="Judul Materi" className="p-3 os-input rounded-xl font-bold" value={form.judul} onChange={e => setForm({...form, judul: e.target.value})} />
+                        
+                        <textarea disabled={loading} placeholder="Deskripsi Singkat" rows="3" className="p-3 os-input rounded-xl text-sm" value={form.deskripsi} onChange={e => setForm({...form, deskripsi: e.target.value})}></textarea>
+                        
+                        <div className="bg-black/30 p-4 rounded-xl border border-white/10">
+                            <label className="text-xs font-bold text-teal-400 mb-2 block">TIPE MATERI</label>
+                            <select disabled={loading} className="w-full p-3 os-select rounded-xl text-sm mb-3" value={form.tipe} onChange={e => setForm({...form, tipe: e.target.value})}>
+                                <option value="File">Unggah File (Gambar/Video/Dok/PDF)</option>
+                                <option value="Link">Tautan (Link YouTube/Drive/Web)</option>
+                            </select>
+
+                            {form.tipe === 'File' ? (
+                                <div>
+                                    <label className="text-[10px] text-slate-400 mb-1 block">Pilih File (Max 15MB)</label>
+                                    <input disabled={loading} type="file" className="w-full p-2 os-input rounded-xl text-xs" onChange={e => setFile(e.target.files[0])} />
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="text-[10px] text-slate-400 mb-1 block">Masukkan URL Tautan</label>
+                                    <input disabled={loading} type="url" placeholder="https://..." className="w-full p-3 os-input rounded-xl text-sm" value={form.linkData} onChange={e => setForm({...form, linkData: e.target.value})} />
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* [BARU] TAMPILAN PROGRESS BAR */}
+                        {loading && form.tipe === 'File' && (
+                            <div className="w-full bg-black/50 rounded-full h-5 mt-2 overflow-hidden border border-white/20 relative shadow-inner">
+                                <div className="bg-gradient-to-r from-teal-500 to-emerald-400 h-5 rounded-full transition-all duration-300 ease-out" style={{ width: `${uploadProgress}%` }}></div>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white drop-shadow-md tracking-widest">
+                                    {uploadProgress}% {uploadProgress < 30 ? 'MEMBACA FILE...' : uploadProgress < 100 ? 'MENGUNGGAH...' : 'SELESAI!'}
+                                </div>
+                            </div>
+                        )}
+
+                        <button disabled={loading} onClick={handleUpload} className={`w-full ${loading ? 'bg-slate-700' : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:scale-[1.02]'} py-4 rounded-xl font-black text-white text-sm tracking-widest mt-2 shadow-lg transition-all`}>
+                            {loading ? (form.tipe === 'File' ? "PROSES UNGGAH..." : "MENGIRIM TAUTAN...") : "PUBLIKASIKAN MATERI"}
+                        </button>
+                    </div>
+                );
+            }
+
+            const filteredMateri = materi.filter(m => m.judul.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            return (
+                <div className="os-window p-6 rounded-[2rem] h-[85vh] animate-in flex flex-col overflow-y-auto custom-scrollbar">
+                    <div className="flex justify-between items-center mb-4">
+                        <button onClick={onBack} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/20"><i className="fas fa-arrow-left"></i></button>
+                        <h3 className="font-black text-sm text-teal-400 tracking-widest">RUANG MATERI</h3>
+                    </div>
+
+                    {(role === 'admin' || role === 'pelatih') && (
+                        <button onClick={() => setView('create')} className="w-full bg-teal-600/20 text-teal-400 border border-teal-500/30 p-4 rounded-xl mb-4 text-xs font-black shadow-lg uppercase tracking-widest hover:bg-teal-600/40 transition">
+                            <i className="fas fa-plus mr-2"></i> TAMBAH MATERI BARU
+                        </button>
+                    )}
+
+                    <div className="relative mb-4">
+                        <i className="fas fa-search absolute top-3.5 left-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" placeholder="Cari judul materi..." className="w-full p-2.5 pl-9 os-input rounded-xl text-xs" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    </div>
+
+                    {loading ? <div className="loader mx-auto mt-4"></div> : filteredMateri.length === 0 ? (
+                        <p className="text-center text-xs text-slate-500 py-6">Belum ada materi yang dibagikan.</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredMateri.map(m => {
+                                let link = m.linkData;
+                                if (m.tipe === 'File') { link = `https://drive.google.com/uc?export=download&id=${m.linkData}`; } 
+                                else if (!link.startsWith('http')) { link = 'https://' + link; }
+
+                                return (
+                                    <div key={m.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col relative group hover:border-teal-500/40 transition">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${m.tipe === 'File' ? 'bg-orange-500/80' : 'bg-blue-500/80'}`}>
+                                                    <i className={`fas ${m.tipe === 'File' ? 'fa-file-download' : 'fa-link'}`}></i>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-white text-sm">{m.judul}</h4>
+                                                    <p className="text-[9px] text-slate-400 uppercase tracking-wider">{m.pengunggah} • {m.tanggal}</p>
+                                                </div>
+                                            </div>
+                                            {(role === 'admin' || role === 'pelatih') && (
+                                                <button onClick={() => handleDelete(m.id)} className="text-red-500/70 hover:text-red-500 text-xs transition p-1"><i className="fas fa-trash"></i></button>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-300 mb-4 ml-10 border-l border-white/10 pl-3 py-1">{m.deskripsi}</p>
+                                        <div className="ml-10">
+                                            <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-teal-600/40 text-teal-300 text-xs font-bold rounded-lg transition border border-transparent hover:border-teal-500/50">
+                                                {m.tipe === 'File' ? <><i className="fas fa-cloud-download-alt"></i> UNDUH FILE</> : <><i className="fas fa-external-link-alt"></i> BUKA TAUTAN</>}
+                                            </a>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        // ==========================================
+        // APP LOGIN UTAMA
+        // ==========================================
+        function LoginApp() {
+            const [view, setView] = useState('login');
+            const [loading, setLoading] = useState(false);
+
+            const handleLogin = async (username, password, type) => {
+                setLoading(true);
+                try {
+                    const res = await api.run('login', { username, password, type }); 
+                    
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        data: res, 
+                        role: res.role || type
+                    }));
+                    
+                    let targetPage = 'index.html'; 
+                    if(res.role === 'admin' || type === 'admin') targetPage = 'admin.html';
+                    else if(type === 'paskibraka' || res.role === 'paskibraka') targetPage = 'paskibraka.html';
+                    else targetPage = 'pelatih.html';
+
+                    window.location.href = targetPage;
+                    
+                } catch (e) {
+                    console.error(e);
+                    // Menampilkan pesan alert yang sangat spesifik dari sistem pendeteksi di atas
+                    alert(typeof e === 'string' ? e : "Terjadi kesalahan sistem yang tidak diketahui.");
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                    <Background3D />
+                    <div className="w-full max-w-lg relative z-0 mt-10 mb-10">
+                        {view === 'login' ? (
+                            <LoginView onLogin={handleLogin} onGoRegister={() => setView('register')} loading={loading} />
+                        ) : (
+                            <RegisterView onBack={() => setView('login')} />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+       function LoginView({ onLogin, onGoRegister, loading }) {
+            const [tab, setTab] = useState('paskibraka'); 
+            const [form, setForm] = useState({ user: '', pass: '' }); 
+            const [showPass, setShowPass] = useState(false); 
+            
+            const [bioEnabled, setBioEnabled] = useState(false);
+            const [savedCreds, setSavedCreds] = useState(null); 
+            const [isBiometricActive, setIsBiometricActive] = useState(false);
+            const [biometricType, setBiometricType] = useState('finger');
+
+            useEffect(() => {
+                const isEnabled = localStorage.getItem('paskib_bio_enabled') === 'true';
+                setBioEnabled(isEnabled);
+                
+                const creds = localStorage.getItem('bio_creds');
+                if (isEnabled && creds) {
+                    const parsedCreds = JSON.parse(creds);
+                    setSavedCreds(parsedCreds);
+                    setTab(parsedCreds.role);
+                }
+            }, []);
+
+            const handleBiometricLogin = (type) => {
+                if (!savedCreds) return alert("Sesi tidak valid. Silakan login manual sekali lagi.");
+                setBiometricType(type);
+                setIsBiometricActive(true); 
+
+                setTimeout(() => {
+                    setIsBiometricActive(false);
+                    onLogin(savedCreds.user, savedCreds.pass, savedCreds.role);
+                }, 1500); 
+            };
+
+            return (
+                <div className="os-window p-8 rounded-[2rem] animate-in text-center relative overflow-hidden">
+                    {isBiometricActive && (
+                        <div className="biometric-scanner-overlay animate-in">
+                            <div className="flex flex-col items-center">
+                                <div className="relative mb-8">
+                                    {biometricType === 'face' ? (
+                                        <div className="face-id-frame">
+                                            <i className="fas fa-user text-6xl text-white opacity-20"></i>
+                                            <div className="face-id-scanner"></div>
+                                        </div>
+                                    ) : (
+                                        <div className="bio-icon-container">
+                                            <i className="fas fa-fingerprint fingerprint-icon"></i>
+                                            <div className="fingerprint-active">
+                                                <i className="fas fa-fingerprint"></i>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <h3 className="text-white font-black text-xl uppercase tracking-[0.2em] mb-2 animate-pulse">
+                                    {biometricType === 'face' ? 'Memindai Wajah' : 'Memindai Sidik Jari'}
+                                </h3>
+                                <p className="text-gold-light text-[10px] font-bold uppercase tracking-[0.4em] opacity-80">
+                                    Verifikasi Identitas...
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-center items-center gap-0 mb-8 filter drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                        <img src={LOGO_DPPI} className="h-14 drop-shadow-xl object-contain -mr-6 relative z-0" />
+                        <img src={LOGO_YOGYA} className="h-20 drop-shadow-2xl z-10 scale-110 object-contain -mx-4" />
+                        <img src={LOGO_PASKIB} className="h-14 drop-shadow-xl object-contain -ml-6 relative z-0 scale-125" />
+                    </div>
+                    <h2 className="text-3xl font-black mb-2 text-white uppercase tracking-tight drop-shadow-lg" style={{textShadow: "0 0 20px rgba(255,215,0,0.3)"}}>RAPORT <span className="text-gold-gradient">DIGITAL</span></h2>
+                    <p className="text-blue-300 text-xs mb-8 tracking-[0.4em] font-bold uppercase opacity-80 drop-shadow">PASKIBRAKA KOTA YOGYAKARTA 2026</p>
+                    <div className="flex p-1 bg-black/40 rounded-xl mb-6 border border-white/10 inner-shadow">{['paskibraka', 'pelatih', 'admin'].map(t => (<button key={t} disabled={loading} onClick={() => setTab(t)} className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-all ${tab === t ? 'bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black shadow-[0_0_15px_rgba(212,175,55,0.5)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{t}</button>))}</div>
+                    <div className="space-y-4 text-left"><div className="relative"><i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type="text" disabled={loading} placeholder={tab === 'paskibraka' ? "NIK Paskibraka" : "Username"} className="w-full pl-10 pr-4 py-3 os-input rounded-xl text-sm font-medium" value={form.user} onChange={e => setForm({...form, user: e.target.value})} /></div><div className="relative"><i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i><input type={showPass ? "text" : "password"} disabled={loading} placeholder="Password" className="w-full pl-10 pr-10 py-3 os-input rounded-xl text-sm font-medium" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} /><button type="button" disabled={loading} onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-gold-primary transition"><i className={`fas ${showPass ? 'fa-eye-slash' : 'fa-eye'}`}></i></button></div><button onClick={() => onLogin(form.user, form.pass, tab)} disabled={loading} className="w-full btn-gold py-3 rounded-xl text-sm font-black uppercase tracking-widest mt-4 flex justify-center items-center gap-2">{loading ? <div className="loader w-4 h-4"></div> : "LOGIN SYSTEM"}</button></div>
+                    
+                    {bioEnabled && savedCreds && savedCreds.role === tab && (
+                        <div className="mt-6 pt-6 border-t border-white/10 animate-in">
+                            <p className="text-[10px] text-slate-400 mb-3 uppercase tracking-widest font-bold">Atau login cepat dengan</p>
+                            <div className="flex justify-center gap-4">
+                                <button type="button" onClick={() => handleBiometricLogin('face')} disabled={loading} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FFD700]/30 transition-all flex flex-col items-center gap-2 group w-20">
+                                    <i className="fas fa-expand text-2xl text-slate-400 group-hover:text-[#FFD700] transition-colors"></i>
+                                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-wider">Face ID</span>
+                                </button>
+                                <button type="button" onClick={() => handleBiometricLogin('finger')} disabled={loading} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FFD700]/30 transition-all flex flex-col items-center gap-2 group w-20">
+                                    <i className="fas fa-fingerprint text-2xl text-slate-400 group-hover:text-[#FFD700] transition-colors"></i>
+                                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-wider">Sidik Jari</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="mt-6 text-xs text-slate-400">Belum punya akun? <button disabled={loading} onClick={onGoRegister} className="text-[#FFD700] hover:underline font-bold hover:text-white transition">REGISTRASI</button></div>
+                </div>
+            );
+        }
+
+        function RegisterView({ onBack }) {
+            const [type, setType] = useState('paskibraka'); const [form, setForm] = useState({ penugasan: "", jabatan: "", jenisKelamin: "" }); const [file, setFile] = useState(null); const [isLoading, setIsLoading] = useState(false);
+            const JABATAN_OPTIONS = [ "KOOR TEHNIK", "WAKOOR TEHNIK", "KOOR PEMBINAAN","KOOR KESEHATAN", "KOOR BENDERA", "KOOR NAMPAN", "KOOR PASUKAN 17", "WAKOOR PASUKAN 17", "KOOR PASUKAN 8","KOOR ASRAMA","KOOR PDD","STAFF" ];
+            
+            const handleSubmit = async () => { 
+                if (!form[type==='paskibraka'?'nik':'username']) return alert("ID/Username Wajib Diisi"); 
+                if (!form.nama) return alert("Nama Lengkap Wajib Diisi"); 
+                if (!form.lapangan) return alert("Nama Lapangan Wajib Diisi"); 
+                if (!form.password) return alert("Password Wajib Diisi"); 
+                if (!file) return alert("Foto Profil Wajib Diisi"); 
+                
+                if (type === 'paskibraka') { 
+                    if (!form.sekolah) return alert("Asal Sekolah Wajib Diisi"); 
+                    if (!form.penugasan) return alert("Penugasan Wajib Dipilih"); 
+                    if (!form.jenisKelamin) return alert("Jenis Kelamin Wajib Dipilih");
+                } else { 
+                    if (!form.jabatan) return alert("Jabatan Wajib Dipilih"); 
+                } 
+                
+                setIsLoading(true); 
+                const reader = new FileReader(); 
+                reader.onload = async (e) => { 
+                    const base64 = e.target.result.split(',')[1]; 
+                    const payload = { ...form, fotoData: base64, fotoMime: file.type }; 
+                    try { 
+                        const method = type === 'paskibraka' ? 'registerPaskibraka' : 'registerPelatih'; 
+                        const res = await api.run(method, payload); 
+                        alert(res.message || "Registrasi Berhasil!"); 
+                        onBack(); 
+                    } catch (err) { 
+                        alert(typeof err === 'string' ? err : "Gagal registrasi"); 
+                    } 
+                    setIsLoading(false); 
+                }; 
+                reader.readAsDataURL(file); 
+            };
+
+            return (
+                <div className="os-window p-0 rounded-[2rem] h-[85vh] flex flex-col overflow-hidden animate-in">
+                    <div className="p-6 pb-4 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl z-10 flex-none text-center">
+                        <div className="text-[10px] tracking-[0.3em] font-bold text-slate-400 uppercase mb-2">FORMULIR PENDAFTARAN</div>
+                        <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] uppercase tracking-wide drop-shadow-md">REGISTRASI BARU {type.toUpperCase()}</h2>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+                        <div><label className="block text-slate-400 mb-1 text-xs font-bold">Tipe Akun</label><select disabled={isLoading} className="w-full p-3 os-select rounded-xl font-medium" value={type} onChange={e => setType(e.target.value)}><option value="paskibraka" className="text-black">Paskibraka</option><option value="pelatih" className="text-black">Pelatih</option></select></div>
+                        <input disabled={isLoading} placeholder={type === 'paskibraka' ? "NIK (Wajib)" : "Username (Wajib)"} className="w-full p-3 os-input rounded-xl font-medium" onChange={e => setForm({...form, [type === 'paskibraka'?'nik':'username']: e.target.value})} />
+                        <input disabled={isLoading} placeholder="Nama Lengkap (Wajib)" className="w-full p-3 os-input rounded-xl font-medium" onChange={e => setForm({...form, nama: e.target.value})} />
+                        <input disabled={isLoading} placeholder="Nama Lapangan (Wajib)" className="w-full p-3 os-input rounded-xl font-medium" onChange={e => setForm({...form, lapangan: e.target.value})} />
+                        {type === 'paskibraka' && (
+    <select disabled={isLoading} className="w-full p-3 os-select rounded-xl font-medium" value={form.jenisKelamin} onChange={e => setForm({...form, jenisKelamin: e.target.value})}>
+        <option value="" disabled selected className="text-slate-500">Pilih Jenis Kelamin (Wajib)</option>
+        <option value="Putra" className="text-black">Putra</option>
+        <option value="Putri" className="text-black">Putri</option>
+    </select>
+)}
+                        {type === 'paskibraka' ? (<><input disabled={isLoading} placeholder="Asal Sekolah (Wajib)" className="w-full p-3 os-input rounded-xl font-medium" onChange={e => setForm({...form, sekolah: e.target.value})} /><select disabled={isLoading} className="w-full p-3 os-select rounded-xl font-medium" value={form.penugasan} onChange={e => setForm({...form, penugasan: e.target.value})}><option value="" disabled selected className="text-slate-500">Pilih Penugasan (Wajib)</option><option value="Kota" className="text-black">Kota Yogyakarta</option><option value="Provinsi" className="text-black">Provinsi DIY</option><option value="Nasional" className="text-black">Nasional</option></select></>) : (<select disabled={isLoading} className="w-full p-3 os-select rounded-xl font-medium" value={form.jabatan} onChange={e => setForm({...form, jabatan: e.target.value})}><option value="" disabled selected className="text-slate-500">Pilih Jabatan (Wajib)</option>{JABATAN_OPTIONS.map(j => <option key={j} value={j} className="text-black">{j}</option>)}</select>)}
+                        <input disabled={isLoading} type="password" placeholder="Password (Wajib)" className="w-full p-3 os-input rounded-xl font-medium" onChange={e => setForm({...form, password: e.target.value})} />
+                        <div><label className="block text-slate-400 mb-1 text-xs font-bold">Foto Profil (Wajib)</label><input disabled={isLoading} type="file" accept="image/*" className="w-full p-2 os-input rounded-xl text-xs" onChange={e => setFile(e.target.files[0])} /></div>
+                    </div>
+                    <div className="p-4 border-t border-white/10 bg-[#050505]/80 z-10 flex-none flex gap-3">
+                        <button disabled={isLoading} onClick={onBack} className="flex-1 py-3 rounded-xl border border-white/20 hover:bg-white/10 text-xs font-bold transition">BATAL</button>
+                        <button onClick={handleSubmit} disabled={isLoading} className="flex-1 btn-gold py-3 rounded-xl text-xs font-bold flex justify-center">{isLoading ? <div className="loader w-4 h-4"></div> : "DAFTAR SEKARANG"}</button>
+                    </div>
+                </div>
+            );
+        }
+
+        
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LoginApp />);
+
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Mesin PWA Aktif di area: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Mesin PWA Gagal Aktif: ', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
